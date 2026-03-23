@@ -1,0 +1,271 @@
+![ConventSystems](docs/images/CS64x64.png)............![ECharts](docs/images/EChartsLogo.png)
+# ConventECharts — Mendix Widget Package
+
+**ConventECharts** is a collection of high-quality, data-driven chart widgets for Mendix, built on top of [Apache ECharts](https://echarts.apache.org/) v5. ECharts is a mature, production-ready charting library used worldwide, offering smooth animations, rich interactivity (tooltips, zoom, click events), and exceptional rendering performance via an HTML5 canvas.
+
+The package ships four widgets:
+
+| Widget | Use case |
+| --- | --- |
+| ECharts Line chart | Trends over time, comparisons between series |
+| ECharts Bar chart | Category comparisons, vertical or horizontal |
+| ECharts Pie / Donut chart | Part-to-whole relationships |
+| ECharts Gauge chart | Single KPI against a scale (speedometer) |
+
+All widgets share a consistent design: connect a Mendix data source, map attributes, and optionally fine-tune with a JSON override — no custom JavaScript required.
+
+---
+
+## Common concepts
+
+### Data set modes
+
+The Line and Bar charts support two modes per series, selectable via **Data set**:
+
+- **Single series** — one data source, one line or bar group. Use this when each record is one data point.
+- **Multiple series** — one data source split into series by a **Group by** attribute. All records go into one query; ECharts divides them by the group value automatically.
+
+### Aggregation
+
+When multiple records share the same X / category value, the widget can aggregate before rendering. Available functions: None, Count, Sum, Average, Minimum, Maximum, Median, Mode, First, Last. Set to **None** if your data is already aggregated.
+
+### Legend
+
+All four widgets support showing or hiding the legend. Position can be set to **Top**, **Bottom**, **Left**, or **Right**. Left/Right positions use a vertical legend orientation; the chart grid automatically adjusts its margins to prevent overlap.
+
+### Dimensions
+
+Each widget has an independent **Width** and **Height** setting:
+
+- Width unit: **Percentage** (of parent) or **Pixels**
+- Height unit: **Percentage of width** (maintains aspect ratio), **Pixels**, or **Percentage of parent**
+
+Default is 100% wide × 75% of width, giving a 4:3 landscape proportion.
+
+### Advanced — Custom chart option
+
+Every widget exposes a **Custom chart option** field. Enter a JSON object that is deep-merged into the ECharts option at render time. This gives access to the full ECharts API — colors, fonts, toolbox, data zoom, custom marklines, and more — without touching code.
+
+Example — add a data zoom slider to a line chart:
+
+```json
+{
+  "dataZoom": [{ "type": "slider", "xAxisIndex": 0 }]
+}
+```
+
+### Advanced — Custom init options
+
+A JSON object passed directly to `echarts.init()`. Use this to change the renderer or set device pixel ratio:
+
+```json
+{ "renderer": "svg", "devicePixelRatio": 2 }
+```
+
+---
+
+## ECharts Line chart
+
+![ECharts Line chart](docs/images/EChartsLineChart.png)
+
+Renders one or more lines on a shared X/Y axis. Supports area fill, curved interpolation, data point markers, and an animated timeline slider.
+
+### Series properties
+
+Each entry in the **Series** list defines one line (or a group of lines in Multiple series mode).
+
+| Property | Description |
+| --- | --- |
+| Data set | Single series or Multiple series (grouped) |
+| Data source | Mendix data source providing the records |
+| Group by | Attribute used to split records into separate lines (Multiple series only) |
+| Series name | Text displayed in the legend |
+| X axis attribute | Horizontal axis value — String, Enum, DateTime, or numeric |
+| Y axis attribute | Vertical axis value — String, Enum, DateTime, or numeric |
+| Aggregation function | How to combine records with the same X value |
+| Tooltip hover text | Custom text shown in the tooltip on hover. Supports attribute tokens |
+| Interpolation | **Linear** (straight segments) or **Curved** (smooth spline) |
+| Line style | **Line**, **Line with markers**, or **Custom** (uses Custom series options) |
+| Line color | CSS color expression evaluated per record, e.g. `'#3a7bd5'` |
+| Marker color | CSS color for data point markers |
+| Fill area | When enabled, fills the area below the line, turning it into an area chart |
+| On click action | Mendix action triggered when the user clicks a data point |
+| Timeline attribute | Groups records into timeline steps. Each unique value is one step |
+| Custom series options | JSON merged into this series' ECharts series config (active when Line style = Custom) |
+
+### Chart-level properties
+
+| Property | Description |
+| --- | --- |
+| X axis label | Label displayed below the X axis |
+| X axis date format | Format pattern for DateTime X values. Tokens: `yyyy`, `MM`, `dd`, `HH`, `mm`, `ss`. Example: `dd-MM-yyyy` |
+| Y axis label | Label displayed to the left of the Y axis |
+| Show legend / Legend position | Toggle and position the series legend |
+| Grid lines | **None**, **Horizontal**, **Vertical**, or **Both** |
+| Background color | CSS color for the chart canvas background. Leave empty for transparent |
+
+### Timeline
+
+When **Enable timeline** is on and at least one series has a **Timeline attribute** configured, ECharts renders a slider below the chart. Each distinct value of the timeline attribute becomes one step.
+
+| Property | Description |
+| --- | --- |
+| Enable timeline | Activates the timeline slider |
+| Timeline date format | Format for DateTime step labels |
+| Auto play | Automatically advances through steps on load |
+| Loop | Restarts from step 1 after the last step |
+| Play interval (ms) | Time between automatic steps. Default: 2000 |
+| Show rewind button | Adds a rewind button to the slider |
+
+---
+
+## ECharts Bar chart
+
+![ECharts Bar chart](docs/images/EChartsBarChart.png)
+
+Renders one or more bar series on a shared category/value axis. Bars can be vertical or horizontal, grouped side-by-side, or stacked. Shares the same timeline feature as the Line chart.
+
+### Series properties
+
+| Property | Description |
+| --- | --- |
+| Data set | Single series or Multiple series (grouped) |
+| Data source | Mendix data source |
+| Group by | Attribute used to split records into separate bar series (Multiple series only) |
+| Series name | Text shown in the legend |
+| Category attribute | The axis used for categories (X for vertical bars, Y for horizontal bars). Accepts String, Enum, DateTime, or numeric |
+| Value attribute | The numeric axis — Decimal, Integer, Long, or AutoNumber |
+| Aggregation function | Aggregation applied when multiple records share the same category |
+| Tooltip hover text | Custom tooltip text |
+| Bar color | CSS color expression per record |
+| On click action | Mendix action triggered on bar click |
+| Timeline attribute | Groups records into timeline steps |
+| Custom series options | JSON merged into the ECharts series config for this bar series |
+
+### Chart-level properties
+
+| Property | Description |
+| --- | --- |
+| Horizontal bars | Rotates the chart so bars grow left-to-right |
+| Stack series | Stacks all series on top of each other instead of placing them side by side |
+| Bar width | Width of each bar: percentage (`60%`) or pixels (`20`). Leave empty for auto |
+| Category axis label | Label for the category axis |
+| Category date format | Format for DateTime category labels |
+| Value axis label | Label for the value axis |
+| Show legend / Legend position | Toggle and position the legend |
+| Grid lines | None, Horizontal, Vertical, or Both |
+| Background color | CSS background color |
+
+The **Timeline** settings are identical to the Line chart.
+
+---
+
+## ECharts Pie / Donut chart
+
+![ECharts Pie / Donut chart](docs/images/EChartsPieChart.png)
+
+Renders one or more concentric pie rings. Can be configured as a standard pie, a donut, or a Nightingale rose chart. Does not have X/Y axes; data is a list of slices with a label and a numeric value.
+
+### Series properties
+
+Each entry in the **Series** list defines one ring (concentric charts use multiple entries).
+
+| Property | Description |
+| --- | --- |
+| Data set | **Single ring** — one data source, one ring. **Multiple rings** — records grouped by the Group by attribute, each group becoming a concentric ring |
+| Data source | Mendix data source |
+| Group by | Attribute used to create multiple rings from one query |
+| Ring name | Name of the ring, shown in multi-ring legends |
+| Slice label attribute | Attribute whose value is the slice name |
+| Value attribute | Numeric attribute that determines the size of the slice |
+| Aggregation function | How to combine records with the same slice label. Default: Sum |
+| Tooltip hover text | Custom tooltip content |
+| Slice color | CSS color expression per record |
+| On click action | Mendix action triggered on slice click |
+| Custom series options | JSON merged into this ring's ECharts series config |
+
+### Chart-level properties
+
+| Property | Description |
+| --- | --- |
+| Donut | Renders the chart with a hollow centre |
+| Inner radius | Size of the donut hole, e.g. `40%`. Default: 40% |
+| Outer radius | Outer size of the chart, e.g. `70%`. Default: 70% |
+| Rose / Nightingale | Also varies the radius of each slice proportionally to its value, creating a Nightingale rose chart |
+| Show legend / Legend position | Toggle and position the legend |
+| Background color | CSS background color |
+
+---
+
+## ECharts Gauge chart
+
+![ECharts Gauge chart](docs/images/EChartsGaugeChart.png)
+
+Renders a speedometer-style gauge. Each record in the data source becomes one needle. Multiple needles can be shown on the same dial, useful for comparing an actual value against a target.
+
+### Data source properties
+
+| Property | Description |
+| --- | --- |
+| Data source | Mendix list. Each item becomes one needle |
+| Value attribute | Numeric attribute for the gauge reading — Decimal, Integer, Long, or AutoNumber |
+| Label | Text template shown below the needle tip. Supports attribute tokens and static text |
+| On click action | Mendix action triggered when the user clicks a needle |
+
+### Scale properties
+
+| Property | Description |
+| --- | --- |
+| Minimum | Minimum value on the gauge scale. Default: 0 |
+| Maximum | Maximum value on the gauge scale. Default: 100 |
+| Units | Suffix appended to the value in the centre label, e.g. `km/h` or `%` |
+| Start angle | Start of the gauge arc in degrees, counter-clockwise from 3 o'clock. Default: 225 |
+| End angle | End of the gauge arc in degrees, counter-clockwise from 3 o'clock. Default: -45 |
+| Split number | Number of major tick intervals on the arc. Default: 10 |
+
+The default start/end angles (225° / -45°) produce the classic speedometer arc with a gap at the bottom.
+
+### Appearance properties
+
+| Property | Description |
+| --- | --- |
+| Show progress bar | Fills the arc from the minimum to the current value, creating a coloured progress indicator |
+| Color ranges | JSON array of `[threshold, color]` pairs. Each threshold is a **fraction** (0–1) of the full scale range. The last pair should always be `[1, "color"]` |
+| Show legend / Legend position | Toggle and position the needle legend |
+| Background color | CSS background color |
+
+#### Color ranges explained
+
+Color ranges define the background color of the gauge arc in bands. A threshold of `0.3` means "up to 30% of the way between minimum and maximum". Example:
+
+```json
+[[0.3, "#67e0e3"], [0.7, "#37a2da"], [1, "#fd666d"]]
+```
+
+This produces: teal for the lower 30%, blue for 30–70%, red for 70–100%.
+
+---
+
+## Tips and tricks
+
+**Per-record colors** — The color expression fields on line, bar, and pie charts are evaluated for every record. You can return different colors based on attribute values:
+
+```
+if $currentObject/Status = 'Critical' then '#e74c3c' else '#2ecc71'
+```
+
+**Custom series options for advanced styling** — Set Line style to **Custom** on a line chart series to unlock the full ECharts series API via the Custom series options JSON field. For example, to add a dashed line:
+
+```json
+{ "lineStyle": { "type": "dashed", "width": 2 }, "symbol": "none" }
+```
+
+**Multiple gauges, one dial** — Add multiple records to your gauge data source (with different values) to show multiple needles on the same gauge face. Add a legend to identify each needle.
+
+**Responsive sizing** — Use **Percentage of width** height with a value of `56` to get a 16:9 chart that scales with the page column width.
+
+---
+
+## License
+
+Apache-2.0 — © Convent Systems

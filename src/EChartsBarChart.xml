@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<widget id="conventsystems.echartsbarchart.EChartsBarChart" offlineCapable="true" pluginWidget="true"
+        xmlns="http://www.mendix.com/widget/1.0/"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd">
+    <name>ECharts Bar chart</name>
+    <description>Bar chart powered by Apache ECharts</description>
+    <studioProCategory>Charts</studioProCategory>
+    <studioCategory>Charts</studioCategory>
+    <properties>
+        <propertyGroup caption="General">
+            <propertyGroup caption="Data source">
+                <property key="series" type="object" isList="true">
+                    <caption>Series</caption>
+                    <description>Add one or more bar series.</description>
+                    <properties>
+                        <propertyGroup caption="General">
+                            <property key="dataSet" type="enumeration" defaultValue="static">
+                                <caption>Data set</caption>
+                                <description />
+                                <enumerationValues>
+                                    <enumerationValue key="static">Single series</enumerationValue>
+                                    <enumerationValue key="dynamic">Multiple series</enumerationValue>
+                                </enumerationValues>
+                            </property>
+                            <property key="staticDataSource" type="datasource" required="false" isList="true">
+                                <caption>Data source</caption>
+                                <description>Data points for a single bar series.</description>
+                            </property>
+                            <property key="dynamicDataSource" type="datasource" required="false" isList="true">
+                                <caption>Data source</caption>
+                                <description>Data points for all series, divided based on the Group by attribute.</description>
+                            </property>
+                            <property key="groupByAttribute" type="attribute" required="false" dataSource="dynamicDataSource">
+                                <caption>Group by</caption>
+                                <description>Data points with the same group value form one series.</description>
+                                <attributeTypes>
+                                    <attributeType name="String" />
+                                    <attributeType name="Boolean" />
+                                    <attributeType name="DateTime" />
+                                    <attributeType name="Decimal" />
+                                    <attributeType name="Enum" />
+                                    <attributeType name="Integer" />
+                                    <attributeType name="Long" />
+                                </attributeTypes>
+                            </property>
+                            <property key="staticName" type="textTemplate" required="false" multiline="false">
+                                <caption>Series name</caption>
+                                <description>The series name shown in the legend.</description>
+                            </property>
+                            <property key="dynamicName" type="textTemplate" required="false" multiline="false" dataSource="dynamicDataSource">
+                                <caption>Series name</caption>
+                                <description>The series name shown in the legend (evaluated per item).</description>
+                            </property>
+                            <property key="staticXAttribute" type="attribute" required="false" dataSource="staticDataSource">
+                                <caption>Category attribute</caption>
+                                <description>Attribute used as the category axis (X for vertical bars, Y for horizontal bars).</description>
+                                <attributeTypes>
+                                    <attributeType name="String" />
+                                    <attributeType name="Enum" />
+                                    <attributeType name="DateTime" />
+                                    <attributeType name="Decimal" />
+                                    <attributeType name="Integer" />
+                                    <attributeType name="Long" />
+                                    <attributeType name="AutoNumber" />
+                                </attributeTypes>
+                            </property>
+                            <property key="dynamicXAttribute" type="attribute" required="false" dataSource="dynamicDataSource">
+                                <caption>Category attribute</caption>
+                                <description>Attribute used as the category axis (X for vertical bars, Y for horizontal bars).</description>
+                                <attributeTypes>
+                                    <attributeType name="String" />
+                                    <attributeType name="Enum" />
+                                    <attributeType name="DateTime" />
+                                    <attributeType name="Decimal" />
+                                    <attributeType name="Integer" />
+                                    <attributeType name="Long" />
+                                    <attributeType name="AutoNumber" />
+                                </attributeTypes>
+                            </property>
+                            <property key="staticYAttribute" type="attribute" required="false" dataSource="staticDataSource">
+                                <caption>Value attribute</caption>
+                                <description>Attribute used as the value axis (Y for vertical bars, X for horizontal bars).</description>
+                                <attributeTypes>
+                                    <attributeType name="Decimal" />
+                                    <attributeType name="Integer" />
+                                    <attributeType name="Long" />
+                                    <attributeType name="AutoNumber" />
+                                </attributeTypes>
+                            </property>
+                            <property key="dynamicYAttribute" type="attribute" required="false" dataSource="dynamicDataSource">
+                                <caption>Value attribute</caption>
+                                <description>Attribute used as the value axis (Y for vertical bars, X for horizontal bars).</description>
+                                <attributeTypes>
+                                    <attributeType name="Decimal" />
+                                    <attributeType name="Integer" />
+                                    <attributeType name="Long" />
+                                    <attributeType name="AutoNumber" />
+                                </attributeTypes>
+                            </property>
+                            <property key="aggregationType" type="enumeration" defaultValue="none">
+                                <caption>Aggregation function</caption>
+                                <description>How to aggregate when multiple values exist for the same category.</description>
+                                <enumerationValues>
+                                    <enumerationValue key="none">None</enumerationValue>
+                                    <enumerationValue key="count">Count</enumerationValue>
+                                    <enumerationValue key="sum">Sum</enumerationValue>
+                                    <enumerationValue key="avg">Average</enumerationValue>
+                                    <enumerationValue key="min">Minimum</enumerationValue>
+                                    <enumerationValue key="max">Maximum</enumerationValue>
+                                    <enumerationValue key="median">Median</enumerationValue>
+                                    <enumerationValue key="mode">Mode</enumerationValue>
+                                    <enumerationValue key="first">First</enumerationValue>
+                                    <enumerationValue key="last">Last</enumerationValue>
+                                </enumerationValues>
+                            </property>
+                            <property key="staticTooltipHoverText" type="textTemplate" required="false" multiline="false" dataSource="staticDataSource">
+                                <caption>Tooltip hover text</caption>
+                                <description />
+                            </property>
+                            <property key="dynamicTooltipHoverText" type="textTemplate" required="false" multiline="false" dataSource="dynamicDataSource">
+                                <caption>Tooltip hover text</caption>
+                                <description />
+                            </property>
+                        </propertyGroup>
+                        <propertyGroup caption="Appearance">
+                            <property key="staticBarColor" type="expression" required="false" dataSource="staticDataSource">
+                                <caption>Bar color</caption>
+                                <description>CSS color value, e.g. #FF0000 or red</description>
+                                <returnType type="String" />
+                            </property>
+                            <property key="dynamicBarColor" type="expression" required="false" dataSource="dynamicDataSource">
+                                <caption>Bar color</caption>
+                                <description>CSS color value, e.g. #FF0000 or red</description>
+                                <returnType type="String" />
+                            </property>
+                        </propertyGroup>
+                        <propertyGroup caption="Events">
+                            <property key="staticOnClickAction" type="action" required="false" dataSource="staticDataSource">
+                                <caption>On click action</caption>
+                                <description />
+                            </property>
+                            <property key="dynamicOnClickAction" type="action" required="false" dataSource="dynamicDataSource">
+                                <caption>On click action</caption>
+                                <description />
+                            </property>
+                        </propertyGroup>
+                        <propertyGroup caption="Timeline">
+                            <property key="staticTimelineAttribute" type="attribute" required="false" dataSource="staticDataSource">
+                                <caption>Timeline attribute</caption>
+                                <description>Group data into timeline steps by this attribute.</description>
+                                <attributeTypes>
+                                    <attributeType name="String" />
+                                    <attributeType name="Boolean" />
+                                    <attributeType name="DateTime" />
+                                    <attributeType name="Decimal" />
+                                    <attributeType name="Enum" />
+                                    <attributeType name="Integer" />
+                                    <attributeType name="Long" />
+                                    <attributeType name="AutoNumber" />
+                                </attributeTypes>
+                            </property>
+                            <property key="dynamicTimelineAttribute" type="attribute" required="false" dataSource="dynamicDataSource">
+                                <caption>Timeline attribute</caption>
+                                <description>Group data into timeline steps by this attribute.</description>
+                                <attributeTypes>
+                                    <attributeType name="String" />
+                                    <attributeType name="Boolean" />
+                                    <attributeType name="DateTime" />
+                                    <attributeType name="Decimal" />
+                                    <attributeType name="Enum" />
+                                    <attributeType name="Integer" />
+                                    <attributeType name="Long" />
+                                    <attributeType name="AutoNumber" />
+                                </attributeTypes>
+                            </property>
+                        </propertyGroup>
+                        <propertyGroup caption="Advanced">
+                            <property key="customSeriesOptions" type="string" required="false" multiline="true">
+                                <caption>Custom series options</caption>
+                                <description>JSON object merged into this series' ECharts series config.</description>
+                            </property>
+                        </propertyGroup>
+                    </properties>
+                </property>
+            </propertyGroup>
+            <propertyGroup caption="General">
+                <property key="enableAdvancedOptions" type="boolean" defaultValue="false">
+                    <caption>Enable advanced options</caption>
+                    <description />
+                </property>
+                <property key="horizontal" type="boolean" defaultValue="false">
+                    <caption>Horizontal bars</caption>
+                    <description>Rotate chart so bars grow left-to-right instead of bottom-to-top.</description>
+                </property>
+                <property key="stack" type="boolean" defaultValue="false">
+                    <caption>Stack series</caption>
+                    <description>Stack all series on top of each other.</description>
+                </property>
+                <property key="barWidth" type="string" required="false">
+                    <caption>Bar width</caption>
+                    <description>Width of each bar. Use a percentage (e.g. 60%) or pixel value (e.g. 20). Leave empty for auto.</description>
+                </property>
+                <property key="categoryAxisLabel" type="textTemplate" required="false" multiline="false">
+                    <caption>Category axis label</caption>
+                    <description />
+                </property>
+                <property key="categoryDateFormat" type="string" required="false">
+                    <caption>Category date format</caption>
+                    <description>Format for DateTime category labels. Tokens: yyyy yy MM dd HH mm ss. Example: dd-MM-yyyy</description>
+                </property>
+                <property key="valueAxisLabel" type="textTemplate" required="false" multiline="false">
+                    <caption>Value axis label</caption>
+                    <description />
+                </property>
+                <property key="showLegend" type="boolean" defaultValue="true">
+                    <caption>Show legend</caption>
+                    <description />
+                </property>
+                <property key="legendPosition" type="enumeration" defaultValue="top">
+                    <caption>Legend position</caption>
+                    <description />
+                    <enumerationValues>
+                        <enumerationValue key="top">Top</enumerationValue>
+                        <enumerationValue key="bottom">Bottom</enumerationValue>
+                        <enumerationValue key="left">Left</enumerationValue>
+                        <enumerationValue key="right">Right</enumerationValue>
+                    </enumerationValues>
+                </property>
+                <property key="gridLines" type="enumeration" defaultValue="none">
+                    <caption>Grid lines</caption>
+                    <description />
+                    <enumerationValues>
+                        <enumerationValue key="none">None</enumerationValue>
+                        <enumerationValue key="horizontal">Horizontal</enumerationValue>
+                        <enumerationValue key="vertical">Vertical</enumerationValue>
+                        <enumerationValue key="both">Both</enumerationValue>
+                    </enumerationValues>
+                </property>
+                <property key="backgroundColor" type="string" required="false">
+                    <caption>Background color</caption>
+                    <description>CSS color for the chart background, e.g. #ffffff or rgba(255,255,255,0.5). Leave empty for transparent.</description>
+                </property>
+            </propertyGroup>
+            <propertyGroup caption="Timeline">
+                <property key="enableTimeline" type="boolean" defaultValue="false">
+                    <caption>Enable timeline</caption>
+                    <description>Show an ECharts timeline control. Set a Timeline attribute on each series to define the steps.</description>
+                </property>
+                <property key="timelineDateFormat" type="string" required="false">
+                    <caption>Timeline date format</caption>
+                    <description>Format for DateTime timeline step labels. Tokens: yyyy yy MM dd HH mm ss. Example: dd-MM-yyyy</description>
+                </property>
+                <property key="timelineAutoPlay" type="boolean" defaultValue="false">
+                    <caption>Auto play</caption>
+                    <description />
+                </property>
+                <property key="timelineLoop" type="boolean" defaultValue="true">
+                    <caption>Loop</caption>
+                    <description />
+                </property>
+                <property key="timelinePlayInterval" type="integer" defaultValue="2000">
+                    <caption>Play interval (ms)</caption>
+                    <description />
+                </property>
+                <property key="timelineRewind" type="boolean" defaultValue="false">
+                    <caption>Show rewind button</caption>
+                    <description />
+                </property>
+            </propertyGroup>
+            <propertyGroup caption="Visibility">
+                <systemProperty key="Visibility" />
+            </propertyGroup>
+            <propertyGroup caption="Common">
+                <systemProperty key="Name" />
+                <systemProperty key="TabIndex" />
+            </propertyGroup>
+        </propertyGroup>
+        <propertyGroup caption="Dimensions">
+            <propertyGroup caption="Dimensions">
+                <property key="widthUnit" type="enumeration" defaultValue="percentage">
+                    <caption>Width unit</caption>
+                    <description>Percentage: portion of parent size. Pixels: absolute amount of pixels.</description>
+                    <enumerationValues>
+                        <enumerationValue key="percentage">Percentage</enumerationValue>
+                        <enumerationValue key="pixels">Pixels</enumerationValue>
+                    </enumerationValues>
+                </property>
+                <property key="width" type="integer" defaultValue="100">
+                    <caption>Width</caption>
+                    <description />
+                </property>
+                <property key="heightUnit" type="enumeration" defaultValue="percentageOfWidth">
+                    <caption>Height unit</caption>
+                    <description />
+                    <enumerationValues>
+                        <enumerationValue key="percentageOfWidth">Percentage of width</enumerationValue>
+                        <enumerationValue key="pixels">Pixels</enumerationValue>
+                        <enumerationValue key="percentageOfParent">Percentage of parent</enumerationValue>
+                    </enumerationValues>
+                </property>
+                <property key="height" type="integer" defaultValue="75">
+                    <caption>Height</caption>
+                    <description />
+                </property>
+            </propertyGroup>
+        </propertyGroup>
+        <propertyGroup caption="Advanced">
+            <propertyGroup caption="Advanced">
+                <property key="customLayout" type="string" required="false" multiline="true">
+                    <caption>Custom chart option</caption>
+                    <description>JSON object deep-merged into the ECharts option.</description>
+                </property>
+                <property key="customConfigurations" type="string" required="false" multiline="true">
+                    <caption>Custom init options</caption>
+                    <description>JSON object passed to echarts.init() as the opts parameter.</description>
+                </property>
+            </propertyGroup>
+        </propertyGroup>
+    </properties>
+</widget>
