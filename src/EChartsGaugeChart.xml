@@ -9,14 +9,10 @@
     <studioCategory>Charts</studioCategory>
     <properties>
         <propertyGroup caption="General">
-            <propertyGroup caption="Data source">
-                <property key="dataSource" type="datasource" required="false" isList="true">
-                    <caption>Data source</caption>
-                    <description>Each record becomes one needle on the gauge.</description>
-                </property>
-                <property key="valueAttribute" type="attribute" required="false" dataSource="dataSource">
+            <propertyGroup caption="Series 1">
+                <property key="valueAttribute" type="attribute" required="false">
                     <caption>Value attribute</caption>
-                    <description>Numeric attribute for the gauge reading.</description>
+                    <description>Numeric attribute for the gauge reading. Read from the surrounding Data View context.</description>
                     <attributeTypes>
                         <attributeType name="Decimal" />
                         <attributeType name="Integer" />
@@ -24,13 +20,69 @@
                         <attributeType name="AutoNumber" />
                     </attributeTypes>
                 </property>
-                <property key="labelAttribute" type="textTemplate" required="false" multiline="false" dataSource="dataSource">
+                <property key="labelAttribute" type="textTemplate" required="false" multiline="false">
                     <caption>Label</caption>
-                    <description>Label shown below the needle tip. Can combine attributes and static text.</description>
+                    <description>Label shown below the needle tip.</description>
                 </property>
-                <property key="onClickAction" type="action" required="false" dataSource="dataSource">
-                    <caption>On click action</caption>
-                    <description />
+                <property key="series1CustomOptions" type="string" required="false" multiline="true">
+                    <caption>Custom options (Series 1)</caption>
+                    <description>JSON object merged into Series 1 ECharts config, e.g. pointer style.</description>
+                </property>
+            </propertyGroup>
+            <propertyGroup caption="Series 2">
+                <property key="valueAttribute2" type="attribute" required="false">
+                    <caption>Value attribute (Series 2)</caption>
+                    <description>When set, a second gauge series is rendered. Leave empty for single-series mode.</description>
+                    <attributeTypes>
+                        <attributeType name="Decimal" />
+                        <attributeType name="Integer" />
+                        <attributeType name="Long" />
+                        <attributeType name="AutoNumber" />
+                    </attributeTypes>
+                </property>
+                <property key="labelAttribute2" type="textTemplate" required="false" multiline="false">
+                    <caption>Label (Series 2)</caption>
+                    <description>Label shown below the needle tip for Series 2.</description>
+                </property>
+                <property key="series2Min" type="integer" defaultValue="0">
+                    <caption>Minimum (Series 2)</caption>
+                    <description>Minimum value for Series 2 scale.</description>
+                </property>
+                <property key="series2Max" type="integer" defaultValue="100">
+                    <caption>Maximum (Series 2)</caption>
+                    <description>Maximum value for Series 2 scale.</description>
+                </property>
+                <property key="series2CustomOptions" type="string" required="false" multiline="true">
+                    <caption>Custom options (Series 2)</caption>
+                    <description>JSON object merged into Series 2 ECharts config, e.g. pointer style.</description>
+                </property>
+            </propertyGroup>
+            <propertyGroup caption="Series 3">
+                <property key="valueAttribute3" type="attribute" required="false">
+                    <caption>Value attribute (Series 3)</caption>
+                    <description>When set, a third gauge series is rendered. Leave empty to skip.</description>
+                    <attributeTypes>
+                        <attributeType name="Decimal" />
+                        <attributeType name="Integer" />
+                        <attributeType name="Long" />
+                        <attributeType name="AutoNumber" />
+                    </attributeTypes>
+                </property>
+                <property key="labelAttribute3" type="textTemplate" required="false" multiline="false">
+                    <caption>Label (Series 3)</caption>
+                    <description>Label shown below the needle tip for Series 3.</description>
+                </property>
+                <property key="series3Min" type="integer" defaultValue="0">
+                    <caption>Minimum (Series 3)</caption>
+                    <description>Minimum value for Series 3 scale.</description>
+                </property>
+                <property key="series3Max" type="integer" defaultValue="100">
+                    <caption>Maximum (Series 3)</caption>
+                    <description>Maximum value for Series 3 scale.</description>
+                </property>
+                <property key="series3CustomOptions" type="string" required="false" multiline="true">
+                    <caption>Custom options (Series 3)</caption>
+                    <description>JSON object merged into Series 3 ECharts config, e.g. pointer style.</description>
                 </property>
             </propertyGroup>
             <propertyGroup caption="General">
@@ -40,11 +92,11 @@
                 </property>
                 <property key="min" type="integer" defaultValue="0">
                     <caption>Minimum</caption>
-                    <description>Minimum value on the gauge scale.</description>
+                    <description>Minimum value on the gauge scale (used as Series 1 minimum).</description>
                 </property>
                 <property key="max" type="integer" defaultValue="100">
                     <caption>Maximum</caption>
-                    <description>Maximum value on the gauge scale.</description>
+                    <description>Maximum value on the gauge scale (used as Series 1 maximum).</description>
                 </property>
                 <property key="units" type="string" required="false">
                     <caption>Units</caption>

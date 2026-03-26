@@ -1,5 +1,6 @@
-![ConventSystems](docs/images/CS64x64.png)............![ECharts](docs/images/EChartsLogo.png)
 # ConventECharts — Mendix Widget Package
+
+![ConventSystems](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/CS64x64.png)............![ECharts](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsLogo.png)
 
 **ConventECharts** is a collection of high-quality, data-driven chart widgets for Mendix, built on top of [Apache ECharts](https://echarts.apache.org/) v5. ECharts is a mature, production-ready charting library used worldwide, offering smooth animations, rich interactivity (tooltips, zoom, click events), and exceptional rendering performance via an HTML5 canvas.
 
@@ -10,7 +11,7 @@ The package ships four widgets:
 | ECharts Line chart | Trends over time, comparisons between series |
 | ECharts Bar chart | Category comparisons, vertical or horizontal |
 | ECharts Pie / Donut chart | Part-to-whole relationships |
-| ECharts Gauge chart | Single KPI against a scale (speedometer) |
+| ECharts Gauge chart | Speedometer / multi-needle gauge; up to 3 independent series on one dial |
 
 All widgets share a consistent design: connect a Mendix data source, map attributes, and optionally fine-tune with a JSON override — no custom JavaScript required.
 
@@ -66,7 +67,7 @@ A JSON object passed directly to `echarts.init()`. Use this to change the render
 
 ## ECharts Line chart
 
-![ECharts Line chart](docs/images/EChartsLineChart.png)
+![ECharts Line chart](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsLineChart.png)
 
 Renders one or more lines on a shared X/Y axis. Supports area fill, curved interpolation, data point markers, and an animated timeline slider.
 
@@ -121,11 +122,11 @@ When **Enable timeline** is on and at least one series has a **Timeline attribut
 
 ## ECharts Bar chart
 
-![ECharts Bar chart](docs/images/EChartsBarChart.png)
+![ECharts Bar chart](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsBarChart.png)
 
 Renders one or more bar series on a shared category/value axis. Bars can be vertical or horizontal, grouped side-by-side, or stacked. Shares the same timeline feature as the Line chart.
 
-### Series properties
+### Bar series properties
 
 | Property | Description |
 | --- | --- |
@@ -142,7 +143,7 @@ Renders one or more bar series on a shared category/value axis. Bars can be vert
 | Timeline attribute | Groups records into timeline steps |
 | Custom series options | JSON merged into the ECharts series config for this bar series |
 
-### Chart-level properties
+### Bar chart-level properties
 
 | Property | Description |
 | --- | --- |
@@ -162,11 +163,11 @@ The **Timeline** settings are identical to the Line chart.
 
 ## ECharts Pie / Donut chart
 
-![ECharts Pie / Donut chart](docs/images/EChartsPieChart.png)
+![ECharts Pie / Donut chart](dhttps://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsPieChart.png)
 
 Renders one or more concentric pie rings. Can be configured as a standard pie, a donut, or a Nightingale rose chart. Does not have X/Y axes; data is a list of slices with a label and a numeric value.
 
-### Series properties
+### Pie series properties
 
 Each entry in the **Series** list defines one ring (concentric charts use multiple entries).
 
@@ -184,7 +185,7 @@ Each entry in the **Series** list defines one ring (concentric charts use multip
 | On click action | Mendix action triggered on slice click |
 | Custom series options | JSON merged into this ring's ECharts series config |
 
-### Chart-level properties
+### Pie chart-level properties
 
 | Property | Description |
 | --- | --- |
@@ -199,25 +200,37 @@ Each entry in the **Series** list defines one ring (concentric charts use multip
 
 ## ECharts Gauge chart
 
-![ECharts Gauge chart](docs/images/EChartsGaugeChart.png)
+![ECharts Gauge chart](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsGaugeChart.png)
 
-Renders a speedometer-style gauge. Each record in the data source becomes one needle. Multiple needles can be shown on the same dial, useful for comparing an actual value against a target.
+Renders a speedometer-style gauge with up to three independent needle series on one dial. The widget is **context-driven**: place it inside a Mendix **Data View** and map each series to an attribute of the Data View entity. No separate data source is configured on the widget itself.
 
-### Data source properties
+### Setup
+
+1. Add a **Data View** to your page with the entity that holds the gauge values (e.g. a non-persistent entity with `Hour`, `Minute`, `Second` attributes).
+2. Place the **ECharts Gauge Chart** widget inside the Data View.
+3. In **Series 1**, set **Value attribute** to the primary attribute.
+4. Optionally set **Series 2** and **Series 3** to additional attributes — this activates multi-series mode automatically.
+
+### Series configuration
+
+The widget has three series groups: **Series 1**, **Series 2**, and **Series 3**. Series 2 and 3 are optional; they activate when a value attribute is selected.
 
 | Property | Description |
 | --- | --- |
-| Data source | Mendix list. Each item becomes one needle |
-| Value attribute | Numeric attribute for the gauge reading — Decimal, Integer, Long, or AutoNumber |
-| Label | Text template shown below the needle tip. Supports attribute tokens and static text |
-| On click action | Mendix action triggered when the user clicks a needle |
+| Value attribute | Numeric context attribute for the needle — Decimal, Integer, Long, or AutoNumber |
+| Label | Text template shown below the needle tip |
+| Minimum *(Series 2 & 3)* | Minimum of the scale for this series. Default: 0 |
+| Maximum *(Series 2 & 3)* | Maximum of the scale for this series. Default: 100 |
+| Custom options *(per series)* | JSON object merged into this series' ECharts config — controls pointer style, axis visibility, detail label, etc. |
+
+The **Minimum** and **Maximum** for Series 1 are taken from the General **Minimum** / **Maximum** properties.
 
 ### Scale properties
 
 | Property | Description |
 | --- | --- |
-| Minimum | Minimum value on the gauge scale. Default: 0 |
-| Maximum | Maximum value on the gauge scale. Default: 100 |
+| Minimum | Minimum value on the gauge scale (applies to Series 1). Default: 0 |
+| Maximum | Maximum value on the gauge scale (applies to Series 1). Default: 100 |
 | Units | Suffix appended to the value in the centre label, e.g. `km/h` or `%` |
 | Start angle | Start of the gauge arc in degrees, counter-clockwise from 3 o'clock. Default: 225 |
 | End angle | End of the gauge arc in degrees, counter-clockwise from 3 o'clock. Default: -45 |
@@ -244,13 +257,173 @@ Color ranges define the background color of the gauge arc in bands. A threshold 
 
 This produces: teal for the lower 30%, blue for 30–70%, red for 70–100%.
 
+### Formatter functions
+
+The `axisLabel.formatter` and `detail.formatter` fields inside **Custom options** accept a JavaScript function written as a string. The widget converts it to a real function at render time.
+
+Example — hide the `0` label on the clock face:
+
+```json
+"axisLabel": {
+  "fontSize": 50,
+  "distance": 25,
+  "formatter": "function(value) { return value === 0 ? '' : value + ''; }"
+}
+```
+
+Any valid single-argument ECharts formatter function body can be used here.
+
+### Multi-series tips
+
+In multi-series mode each series renders its own axis decorations (arc, ticks, labels). Usually you want these only on one series — keep them on Series 1 and hide them on the others via **Custom options**:
+
+**Series 1 — hour hand, keep clock face visible:**
+
+```json
+{
+  "clockwise": true,
+  "animation": false,
+  "axisLine": {
+    "lineStyle": {
+      "width": 15,
+      "color": [[1, "rgba(0,0,0,0.7)"]],
+      "shadowColor": "rgba(0,0,0,0.5)",
+      "shadowBlur": 15
+    }
+  },
+  "splitLine": {
+    "lineStyle": {
+      "shadowColor": "rgba(0,0,0,0.3)",
+      "shadowBlur": 3,
+      "shadowOffsetX": 1,
+      "shadowOffsetY": 2
+    }
+  },
+  "axisLabel": {
+    "fontSize": 50,
+    "distance": 25,
+    "formatter": "function(value) { return value === 0 ? '' : value + ''; }"
+  },
+  "pointer": {
+    "icon": "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
+    "width": 12,
+    "length": "55%",
+    "offsetCenter": [0, "8%"],
+    "itemStyle": {
+      "color": "#C0911F",
+      "shadowColor": "rgba(0,0,0,0.3)",
+      "shadowBlur": 8,
+      "shadowOffsetX": 2,
+      "shadowOffsetY": 4
+    }
+  },
+  "detail": { "show": false },
+  "title": { "offsetCenter": [0, "30%"] }
+}
+```
+
+**Series 2 — minute hand:**
+
+```json
+{
+  "clockwise": true,
+  "axisLine": { "show": false },
+  "splitLine": { "show": false },
+  "axisTick": { "show": false },
+  "axisLabel": { "show": false },
+  "pointer": {
+    "icon": "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
+    "width": 8,
+    "length": "70%",
+    "offsetCenter": [0, "8%"],
+    "itemStyle": {
+      "color": "#C0911F",
+      "shadowColor": "rgba(0,0,0,0.3)",
+      "shadowBlur": 8,
+      "shadowOffsetX": 2,
+      "shadowOffsetY": 4
+    }
+  },
+  "anchor": {
+    "show": true,
+    "size": 20,
+    "showAbove": false,
+    "itemStyle": {
+      "borderWidth": 15,
+      "borderColor": "#C0911F",
+      "shadowColor": "rgba(0,0,0,0.3)",
+      "shadowBlur": 8,
+      "shadowOffsetX": 2,
+      "shadowOffsetY": 4
+    }
+  },
+  "detail": { "show": false },
+  "title": { "offsetCenter": ["0%", "-40%"] }
+}
+```
+
+**Series 3 — second hand (no sweep animation on reset):**
+
+```json
+{
+  "clockwise": true,
+  "animation": false,
+  "animationEasingUpdate": "bounceOut",
+  "axisLine": { "show": false },
+  "splitLine": { "show": false },
+  "axisTick": { "show": false },
+  "axisLabel": { "show": false },
+  "pointer": {
+    "icon": "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
+    "width": 4,
+    "length": "85%",
+    "offsetCenter": [0, "8%"],
+    "itemStyle": {
+      "color": "#C0911F",
+      "shadowColor": "rgba(0,0,0,0.3)",
+      "shadowBlur": 8,
+      "shadowOffsetX": 2,
+      "shadowOffsetY": 4
+    }
+  },
+  "anchor": {
+    "show": true,
+    "size": 15,
+    "showAbove": true,
+    "itemStyle": {
+      "color": "#C0911F",
+      "shadowColor": "rgba(0,0,0,0.3)",
+      "shadowBlur": 8,
+      "shadowOffsetX": 2,
+      "shadowOffsetY": 4
+    }
+  },
+  "detail": { "show": false },
+  "title": { "offsetCenter": ["0%", "-40%"] }
+}
+```
+
+### Clock gauge example
+
+A clock gauge maps `Hour` (0–12), `Minute` (0–60), and `Second` (0–60) attributes from a Data View onto three series:
+
+| Setting | Value |
+| --- | --- |
+| Start angle | `90` |
+| End angle | `-270` |
+| Series 1 Min / Max | `0` / `12` |
+| Series 2 Min / Max | `0` / `60` |
+| Series 3 Min / Max | `0` / `60` |
+
+Use the **Custom options** blocks above for each series. The result matches the [Apache ECharts clock gauge example](https://echarts.apache.org/examples/en/editor.html?c=gauge-clock).
+
 ---
 
 ## Tips and tricks
 
 **Per-record colors** — The color expression fields on line, bar, and pie charts are evaluated for every record. You can return different colors based on attribute values:
 
-```
+```text
 if $currentObject/Status = 'Critical' then '#e74c3c' else '#2ecc71'
 ```
 
@@ -260,7 +433,7 @@ if $currentObject/Status = 'Critical' then '#e74c3c' else '#2ecc71'
 { "lineStyle": { "type": "dashed", "width": 2 }, "symbol": "none" }
 ```
 
-**Multiple gauges, one dial** — Add multiple records to your gauge data source (with different values) to show multiple needles on the same gauge face. Add a legend to identify each needle.
+**Multiple needles, one dial** — Configure Series 2 and/or Series 3 in the gauge widget to show up to three independent needles on the same dial, each with its own scale and pointer style.
 
 **Responsive sizing** — Use **Percentage of width** height with a value of `56` to get a 16:9 chart that scales with the page column width.
 

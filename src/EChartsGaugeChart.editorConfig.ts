@@ -39,5 +39,19 @@ export function check(values: any): Problem[] {
     if (values.min >= values.max) {
         errors.push({ property: "max", message: "Maximum must be greater than minimum.", severity: "error" });
     }
+    for (const [key, minKey, maxKey] of [
+        ["series1CustomOptions", null, null],
+        ["series2CustomOptions", "series2Min", "series2Max"],
+        ["series3CustomOptions", "series3Min", "series3Max"]
+    ] as [string, string | null, string | null][]) {
+        if (values[key]) {
+            try { JSON.parse(values[key]); } catch {
+                errors.push({ property: key, message: "Must be valid JSON.", severity: "error" });
+            }
+        }
+        if (minKey && maxKey && values[minKey] >= values[maxKey]) {
+            errors.push({ property: maxKey, message: "Maximum must be greater than minimum.", severity: "error" });
+        }
+    }
     return errors;
 }

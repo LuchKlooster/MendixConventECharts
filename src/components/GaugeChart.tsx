@@ -12,8 +12,17 @@ export interface GaugePointer {
     value: number;
 }
 
+export interface GaugeSeries {
+    pointers: GaugePointer[];
+    min?: number;
+    max?: number;
+    customSeriesOptions?: string;
+    onDataPointClick?: (dataIndex: number) => void;
+}
+
 export interface GaugeChartProps {
     pointers: GaugePointer[];
+    seriesList?: GaugeSeries[];
     min: number;
     max: number;
     units: string;
@@ -66,15 +75,17 @@ function parseColorRanges(json?: string): [number, string][] {
     }
 }
 
-function buildEChartsOption(props: GaugeChartProps): EChartsOption {
-    const {
-        pointers, min, max, units, startAngle, endAngle, splitNumber,
-        showProgress, colorRanges, showLegend, legendPosition, backgroundColor
-    } = props;
-
-    const colors = parseColorRanges(colorRanges);
-
-    const series: GaugeSeriesOption = {
+function buildBaseSeries(
+    min: number,
+    max: number,
+    startAngle: number,
+    endAngle: number,
+    splitNumber: number,
+    showProgress: boolean,
+    colors: [number, string][],
+    units: string
+): GaugeSeriesOption {
+    return {
         type: "gauge",
         min,
         max,
@@ -82,9 +93,7 @@ function buildEChartsOption(props: GaugeChartProps): EChartsOption {
         endAngle,
         splitNumber,
         progress: { show: showProgress, width: 10 },
-        axisLine: {
-            lineStyle: { width: 10, color: colors }
-        },
+        axisLine: { lineStyle: { width: 10, color: colors } },
         pointer: { itemStyle: { color: "auto" } },
         axisTick: { show: true },
         splitLine: { length: 15, lineStyle: { width: 2, color: "#999" } },
@@ -94,15 +103,82 @@ function buildEChartsOption(props: GaugeChartProps): EChartsOption {
             formatter: units ? `{value} ${units}` : "{value}",
             color: "auto",
             fontSize: 20
-        },
-        data: pointers.map(p => ({ name: p.name, value: p.value }))
+        }
     };
+}
+
+function parseFunctionString(val: unknown): unknown {
+    if (typeof val !== "string") return val;
+    const s = val.trim();
+    if (s.startsWith("function")) {
+        try {
+            // eslint-disable-next-line no-new-func
+            return new Function(`return (${s})`)();
+        } catch {
+            console.warn("[EChartsGaugeChart] Could not parse formatter function string");
+        }
+    }
+    return val;
+}
+
+function resolveFormatters(series: GaugeSeriesOption): GaugeSeriesOption {
+    const s = series as Record<string, unknown>;
+    if (s.axisLabel && typeof s.axisLabel === "object") {
+        const al = s.axisLabel as Record<string, unknown>;
+        if (typeof al.formatter === "string") al.formatter = parseFunctionString(al.formatter);
+    }
+    if (s.detail && typeof s.detail === "object") {
+        const d = s.detail as Record<string, unknown>;
+        if (typeof d.formatter === "string") d.formatter = parseFunctionString(d.formatter);
+    }
+    return series;
+}
+
+function buildEChartsOption(props: GaugeChartProps): EChartsOption {
+    const {
+        pointers, seriesList, min, max, units, startAngle, endAngle, splitNumber,
+        showProgress, colorRanges, showLegend, legendPosition, backgroundColor
+    } = props;
+
+    const colors = parseColorRanges(colorRanges);
+
+    let seriesArray: GaugeSeriesOption[];
+
+    if (seriesList && seriesList.length > 0) {
+        seriesArray = seriesList.map(s => {
+            const base = buildBaseSeries(
+                s.min ?? min,
+                s.max ?? max,
+                startAngle,
+                endAngle,
+                splitNumber,
+                showProgress,
+                colors,
+                units
+            );
+            const withData: GaugeSeriesOption = {
+                ...base,
+                data: s.pointers.map(p => ({ name: p.name, value: p.value }))
+            };
+            if (s.customSeriesOptions) {
+                try {
+                    return resolveFormatters(deepMerge(withData, JSON.parse(s.customSeriesOptions) as Partial<GaugeSeriesOption>));
+                } catch {
+                    console.warn("[EChartsGaugeChart] Invalid customSeriesOptions JSON in series");
+                }
+            }
+            return resolveFormatters(withData);
+        });
+    } else {
+        const base = buildBaseSeries(min, max, startAngle, endAngle, splitNumber, showProgress, colors, units);
+        seriesArray = [{ ...base, data: pointers.map(p => ({ name: p.name, value: p.value })) }];
+    }
 
     const option: EChartsOption = {
         backgroundColor: backgroundColor || "transparent",
         legend: buildLegend(showLegend, legendPosition),
         tooltip: { trigger: "item" },
-        series: [series]
+        series: seriesArray
     };
 
     if (props.customOption) {
@@ -119,6 +195,7 @@ function buildEChartsOption(props: GaugeChartProps): EChartsOption {
 export function GaugeChart(props: GaugeChartProps): ReactElement {
     const containerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<echarts.ECharts | null>(null);
+    const propsRef = useRef(props);
 
     // Initialize
     useEffect(() => {
@@ -134,23 +211,31 @@ export function GaugeChart(props: GaugeChartProps): ReactElement {
         };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Keep propsRef current on every render (no side effects)
+    propsRef.current = props;
+
     // Update option on every render
     useEffect(() => {
         if (!chartRef.current) return;
         chartRef.current.setOption(buildEChartsOption(props) as EChartsOption, { notMerge: true });
     });
 
-    // Click handler
+    // Click handler — registered once, reads current props via ref to avoid re-registering on every render
     useEffect(() => {
         const chart = chartRef.current;
-        if (!chart || !props.onDataPointClick) return;
+        if (!chart) return;
         const handler = (params: unknown) => {
-            const p = params as { dataIndex: number };
-            props.onDataPointClick!(p.dataIndex);
+            const p = params as { seriesIndex: number; dataIndex: number };
+            const { seriesList, onDataPointClick } = propsRef.current;
+            if (seriesList && seriesList.length > 0) {
+                seriesList[p.seriesIndex]?.onDataPointClick?.(p.dataIndex);
+            } else {
+                onDataPointClick?.(p.dataIndex);
+            }
         };
         chart.on("click", handler);
         return () => { chart.off("click", handler); };
-    }, [props.onDataPointClick]);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Resize observer
     useEffect(() => {

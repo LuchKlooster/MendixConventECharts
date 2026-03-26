@@ -4,7 +4,7 @@
  * @author Mendix Widgets Framework Team
  */
 import { CSSProperties } from "react";
-import { ListValue, ListActionValue, ListAttributeValue, ListExpressionValue } from "mendix";
+import { DynamicValue, EditableValue } from "mendix";
 import { Big } from "big.js";
 
 export type LegendPositionEnum = "top" | "bottom" | "left" | "right";
@@ -18,10 +18,19 @@ export interface EChartsGaugeChartContainerProps {
     class: string;
     style?: CSSProperties;
     tabIndex?: number;
-    dataSource?: ListValue;
-    valueAttribute?: ListAttributeValue<Big>;
-    labelAttribute?: ListExpressionValue<string>;
-    onClickAction?: ListActionValue;
+    valueAttribute?: EditableValue<Big>;
+    labelAttribute?: DynamicValue<string>;
+    series1CustomOptions: string;
+    valueAttribute2?: EditableValue<Big>;
+    labelAttribute2?: DynamicValue<string>;
+    series2Min: number;
+    series2Max: number;
+    series2CustomOptions: string;
+    valueAttribute3?: EditableValue<Big>;
+    labelAttribute3?: DynamicValue<string>;
+    series3Min: number;
+    series3Max: number;
+    series3CustomOptions: string;
     enableAdvancedOptions: boolean;
     min: number;
     max: number;
@@ -53,10 +62,19 @@ export interface EChartsGaugeChartPreviewProps {
     readOnly: boolean;
     renderMode: "design" | "xray" | "structure";
     translate: (text: string) => string;
-    dataSource: {} | { caption: string } | { type: string } | null;
     valueAttribute: string;
     labelAttribute: string;
-    onClickAction: {} | null;
+    series1CustomOptions: string;
+    valueAttribute2: string;
+    labelAttribute2: string;
+    series2Min: number | null;
+    series2Max: number | null;
+    series2CustomOptions: string;
+    valueAttribute3: string;
+    labelAttribute3: string;
+    series3Min: number | null;
+    series3Max: number | null;
+    series3CustomOptions: string;
     enableAdvancedOptions: boolean;
     min: number | null;
     max: number | null;
