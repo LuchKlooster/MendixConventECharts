@@ -15,6 +15,8 @@ The package ships four widgets:
 
 All widgets share a consistent design: connect a Mendix data source, map attributes, and optionally fine-tune with a JSON override — no custom JavaScript required.
 
+A live demo Mendix project is available at **[github.com/LuchKlooster/MendixConventEChartsDemo](https://github.com/LuchKlooster/MendixConventEChartsDemo)**.
+
 ---
 
 ## Common concepts
@@ -163,7 +165,7 @@ The **Timeline** settings are identical to the Line chart.
 
 ## ECharts Pie / Donut chart
 
-![ECharts Pie / Donut chart](dhttps://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsPieChart.png)
+![ECharts Pie / Donut chart](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsPieChart.png)
 
 Renders one or more concentric pie rings. Can be configured as a standard pie, a donut, or a Nightingale rose chart. Does not have X/Y axes; data is a list of slices with a label and a numeric value.
 
@@ -202,16 +204,41 @@ Each entry in the **Series** list defines one ring (concentric charts use multip
 
 ![ECharts Gauge chart](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsGaugeChart.png)
 
-Renders a speedometer-style gauge with up to three independent needle series on one dial. The widget is **context-driven**: place it inside a Mendix **Data View** and map each series to an attribute of the Data View entity. No separate data source is configured on the widget itself.
+Renders a speedometer-style gauge. Supports two modes:
 
-### Setup
+- **Context mode** — up to three fixed series read from a surrounding Data View. Best for a small, known set of attributes (e.g. a clock with Hour, Minute, Second).
+- **List mode** — a list data source where every record becomes one needle in a single shared series. Best for a variable number of items stored as rows in a persistent entity (e.g. Good / Better / Perfect KPI indicators).
+
+### Setup — context mode
 
 1. Add a **Data View** to your page with the entity that holds the gauge values (e.g. a non-persistent entity with `Hour`, `Minute`, `Second` attributes).
 2. Place the **ECharts Gauge Chart** widget inside the Data View.
 3. In **Series 1**, set **Value attribute** to the primary attribute.
 4. Optionally set **Series 2** and **Series 3** to additional attributes — this activates multi-series mode automatically.
 
-### Series configuration
+### Setup — list mode (multi-needle)
+
+1. Place the widget **directly on the page** — no surrounding Data View needed.
+2. In the **Multi-needle (list)** property group, enable **Use list data source**.
+3. Set **Data source** to a **Database** (XPath) data source on your persistent entity. Avoid microflow data sources — they cause repeated fetching with non-persistent entities.
+4. Set **Value attribute** and **Label attribute** to the numeric and name attributes.
+5. Paste the series styling in **Custom options (list series)**.
+
+The widget automatically spaces title and detail labels evenly across the dial. For 3 items the positions are −40 %, 0 %, and 40 %; for any other count they are calculated proportionally.
+
+### Multi-needle (list) properties
+
+Visible only when **Use list data source** is enabled.
+
+| Property | Description |
+| --- | --- |
+| Use list data source | Switches the widget to list mode. Hide Series 1/2/3 and show the list properties instead |
+| Data source | Persistent entity data source (use Database / XPath — not a microflow returning NPEs) |
+| Value attribute | Numeric attribute for the needle value |
+| Label attribute | String or Enum attribute for the needle label |
+| Custom options (list series) | JSON merged into the shared ECharts series config — pointer style, progress, anchor, detail formatter, etc. |
+
+### Series configuration (context mode)
 
 The widget has three series groups: **Series 1**, **Series 2**, and **Series 3**. Series 2 and 3 are optional; they activate when a value attribute is selected.
 
@@ -403,6 +430,48 @@ In multi-series mode each series renders its own axis decorations (arc, ticks, l
 }
 ```
 
+### Multi-needle list mode example
+
+Based on the [Apache ECharts multi-title gauge example](https://echarts.apache.org/examples/en/editor.html?c=gauge-multi-title).
+
+**Custom options (list series):**
+
+```json
+{
+  "animation": false,
+  "anchor": {
+    "show": true,
+    "showAbove": true,
+    "size": 18,
+    "itemStyle": { "color": "#FAC858" }
+  },
+  "pointer": {
+    "icon": "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
+    "width": 8,
+    "length": "80%",
+    "offsetCenter": [0, "8%"]
+  },
+  "progress": {
+    "show": true,
+    "overlap": true,
+    "roundCap": true
+  },
+  "axisLine": { "roundCap": true },
+  "title": { "fontSize": 14 },
+  "detail": {
+    "width": 40,
+    "height": 14,
+    "fontSize": 14,
+    "color": "#fff",
+    "backgroundColor": "inherit",
+    "borderRadius": 3,
+    "formatter": "{value}%"
+  }
+}
+```
+
+> **Note:** Set `"animation": false` to prevent ghost needle trails when values update frequently. The label positions (`-40%`, `0%`, `40%` for 3 items) are calculated automatically — no manual offset configuration is needed.
+
 ### Clock gauge example
 
 A clock gauge maps `Hour` (0–12), `Minute` (0–60), and `Second` (0–60) attributes from a Data View onto three series:
@@ -433,7 +502,7 @@ if $currentObject/Status = 'Critical' then '#e74c3c' else '#2ecc71'
 { "lineStyle": { "type": "dashed", "width": 2 }, "symbol": "none" }
 ```
 
-**Multiple needles, one dial** — Configure Series 2 and/or Series 3 in the gauge widget to show up to three independent needles on the same dial, each with its own scale and pointer style.
+**Multiple needles, one dial** — Use Series 2 and/or Series 3 (context mode) for a fixed set of needles with independent scales, or enable **Use list data source** (list mode) for a dynamic number of needles from a persistent entity.
 
 **Responsive sizing** — Use **Percentage of width** height with a value of `56` to get a 16:9 chart that scales with the page column width.
 
