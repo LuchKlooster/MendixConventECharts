@@ -9,6 +9,38 @@
     <studioCategory>Charts</studioCategory>
     <properties>
         <propertyGroup caption="General">
+            <propertyGroup caption="Multi-needle (list)">
+                <property key="useListMode" type="boolean" defaultValue="false">
+                    <caption>Use list data source</caption>
+                    <description>When enabled, the widget reads needles from a list data source instead of the surrounding Data View. Place the widget outside any Data View when using this mode.</description>
+                </property>
+                <property key="dataSource" type="datasource" isList="true" required="false">
+                    <caption>Data source</caption>
+                    <description>Optional list data source. When configured, every item becomes a needle in one shared gauge series. Overrides the Series 1/2/3 context attributes.</description>
+                </property>
+                <property key="listValueAttribute" type="attribute" dataSource="dataSource" required="false">
+                    <caption>Value attribute</caption>
+                    <description>Numeric attribute for the needle value.</description>
+                    <attributeTypes>
+                        <attributeType name="Decimal" />
+                        <attributeType name="Integer" />
+                        <attributeType name="Long" />
+                        <attributeType name="AutoNumber" />
+                    </attributeTypes>
+                </property>
+                <property key="listLabelAttribute" type="attribute" dataSource="dataSource" required="false">
+                    <caption>Label attribute</caption>
+                    <description>String attribute for the needle label shown below the needle tip.</description>
+                    <attributeTypes>
+                        <attributeType name="String" />
+                        <attributeType name="Enum" />
+                    </attributeTypes>
+                </property>
+                <property key="listCustomOptions" type="string" required="false" multiline="true">
+                    <caption>Custom options (list series)</caption>
+                    <description>JSON object merged into the shared ECharts series config when using the list data source, e.g. pointer style, progress, anchor.</description>
+                </property>
+            </propertyGroup>
             <propertyGroup caption="Series 1">
                 <property key="valueAttribute" type="attribute" required="false">
                     <caption>Value attribute</caption>

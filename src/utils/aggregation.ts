@@ -3,6 +3,7 @@ import { AggregationTypeEnum } from "../../typings/EChartsLineChartProps";
 export interface DataPoint {
     x: string | number;
     y: number;
+    colorDim?: number;
     tooltip?: string;
 }
 

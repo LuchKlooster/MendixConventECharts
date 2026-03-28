@@ -11,7 +11,19 @@ function hideProperties(properties: Properties, keys: string[]): void {
     }
 }
 
+const LIST_PROPS = ["dataSource", "listValueAttribute", "listLabelAttribute", "listCustomOptions"];
+const CONTEXT_PROPS = [
+    "valueAttribute", "labelAttribute", "series1CustomOptions",
+    "valueAttribute2", "labelAttribute2", "series2Min", "series2Max", "series2CustomOptions",
+    "valueAttribute3", "labelAttribute3", "series3Min", "series3Max", "series3CustomOptions"
+];
+
 export function getProperties(values: any, defaultProperties: Properties): Properties {
+    if (values.useListMode) {
+        hideProperties(defaultProperties, CONTEXT_PROPS);
+    } else {
+        hideProperties(defaultProperties, LIST_PROPS);
+    }
     if (!values.showLegend) {
         hideProperties(defaultProperties, ["legendPosition"]);
     }
@@ -23,8 +35,9 @@ export function getProperties(values: any, defaultProperties: Properties): Prope
 
 export function check(values: any): Problem[] {
     const errors: Problem[] = [];
-    if (!values.dataSource) {
-        errors.push({ property: "dataSource", message: "A data source is required.", severity: "error" });
+
+    if (values.useListMode && !values.dataSource) {
+        errors.push({ property: "dataSource", message: "A data source is required in list mode.", severity: "error" });
     }
     if (values.colorRanges) {
         try { JSON.parse(values.colorRanges); } catch {
@@ -42,7 +55,8 @@ export function check(values: any): Problem[] {
     for (const [key, minKey, maxKey] of [
         ["series1CustomOptions", null, null],
         ["series2CustomOptions", "series2Min", "series2Max"],
-        ["series3CustomOptions", "series3Min", "series3Max"]
+        ["series3CustomOptions", "series3Min", "series3Max"],
+        ["listCustomOptions", null, null]
     ] as [string, string | null, string | null][]) {
         if (values[key]) {
             try { JSON.parse(values[key]); } catch {

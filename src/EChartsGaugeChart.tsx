@@ -1,4 +1,4 @@
-import { ReactElement, CSSProperties } from "react";
+import { ReactElement, CSSProperties, useRef } from "react";
 import { GaugeChart, GaugePointer, GaugeSeries } from "./components/GaugeChart";
 import "./ui/EChartsLineChart.css"; // shared stylesheet
 
@@ -6,11 +6,22 @@ import "./ui/EChartsLineChart.css"; // shared stylesheet
 type ContextAttr = { value?: unknown };
 type ContextText = { value?: unknown };
 
+// List-driven attribute: Mendix ListAttributeValue exposes .get(item)
+interface ObjectItem { id: unknown }
+type ListValue = { status: "available" | "loading"; items?: ObjectItem[] };
+type ListAttrValue = { get: (item: ObjectItem) => { value?: unknown } };
+
 interface EChartsGaugeChartContainerProps {
     name: string;
     class: string;
     style?: CSSProperties;
     tabIndex?: number;
+    // Multi-needle (list) mode
+    useListMode: boolean;
+    dataSource?: ListValue;
+    listValueAttribute?: ListAttrValue;
+    listLabelAttribute?: ListAttrValue;
+    listCustomOptions: string;
     // Series 1
     valueAttribute?: ContextAttr;
     labelAttribute?: ContextText;
@@ -55,8 +66,15 @@ function makePointer(valueAttr?: ContextAttr, labelAttr?: ContextText): GaugePoi
     };
 }
 
+// Evenly spaces N labels: for N=3 produces "-40%", "0%", "40%"
+function autoOffset(i: number, n: number): string {
+    if (n <= 1) return "0%";
+    return `${((i / (n - 1)) - 0.5) * 80}%`;
+}
+
 export function EChartsGaugeChart(props: EChartsGaugeChartContainerProps): ReactElement {
     const {
+        useListMode, dataSource, listValueAttribute, listLabelAttribute, listCustomOptions,
         valueAttribute, labelAttribute, series1CustomOptions,
         valueAttribute2, labelAttribute2, series2Min, series2Max, series2CustomOptions,
         valueAttribute3, labelAttribute3, series3Min, series3Max, series3CustomOptions,
@@ -67,15 +85,45 @@ export function EChartsGaugeChart(props: EChartsGaugeChartContainerProps): React
         class: className, style
     } = props;
 
-    const isMultiSeries = !!(valueAttribute2 || valueAttribute3);
+    // --- List mode: one series, multiple data points ---
+    const listCacheRef = useRef<GaugePointer[]>([]);
 
-    const seriesList: GaugeSeries[] | undefined = isMultiSeries ? [
-        { pointers: [makePointer(valueAttribute, labelAttribute)], min, max, customSeriesOptions: series1CustomOptions || undefined },
-        ...(valueAttribute2 ? [{ pointers: [makePointer(valueAttribute2, labelAttribute2)], min: series2Min, max: series2Max, customSeriesOptions: series2CustomOptions || undefined }] : []),
-        ...(valueAttribute3 ? [{ pointers: [makePointer(valueAttribute3, labelAttribute3)], min: series3Min, max: series3Max, customSeriesOptions: series3CustomOptions || undefined }] : [])
-    ] : undefined;
+    if (dataSource?.status === "available" && listValueAttribute) {
+        const items = dataSource.items ?? [];
+        listCacheRef.current = items.map((item, i) => ({
+            name: String(listLabelAttribute?.get(item).value ?? ""),
+            value: Number(listValueAttribute.get(item).value ?? 0),
+            titleOffset: [autoOffset(i, items.length), "80%"],
+            detailOffset: [autoOffset(i, items.length), "95%"]
+        }));
+    }
 
-    const pointers: GaugePointer[] = isMultiSeries ? [] : [makePointer(valueAttribute, labelAttribute)];
+    const isListMode = useListMode && !!dataSource;
+
+    // --- Context multi-series mode: up to 3 separate ECharts series ---
+    const isMultiSeries = !isListMode && !!(valueAttribute2 || valueAttribute3);
+
+    let seriesList: GaugeSeries[] | undefined;
+    let pointers: GaugePointer[];
+
+    if (isListMode) {
+        seriesList = [{
+            pointers: listCacheRef.current,
+            min,
+            max,
+            customSeriesOptions: listCustomOptions || undefined
+        }];
+        pointers = [];
+    } else if (isMultiSeries) {
+        seriesList = [
+            { pointers: [makePointer(valueAttribute, labelAttribute)], min, max, customSeriesOptions: series1CustomOptions || undefined },
+            ...(valueAttribute2 ? [{ pointers: [makePointer(valueAttribute2, labelAttribute2)], min: series2Min, max: series2Max, customSeriesOptions: series2CustomOptions || undefined }] : []),
+            ...(valueAttribute3 ? [{ pointers: [makePointer(valueAttribute3, labelAttribute3)], min: series3Min, max: series3Max, customSeriesOptions: series3CustomOptions || undefined }] : [])
+        ];
+        pointers = [];
+    } else {
+        pointers = [makePointer(valueAttribute, labelAttribute)];
+    }
 
     const containerStyle = buildContainerStyle(widthUnit, width, heightUnit, height, style);
 

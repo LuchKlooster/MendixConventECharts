@@ -19,7 +19,7 @@ export interface BuiltSeries {
     lineColor?: string;
     markerColor?: string;
     xIsDateTime: boolean;
-    data: Array<[string | number, number]>;
+    data: Array<[string | number, number] | [string | number, number, number]>;
     tooltips: string[];
     customSeriesOptions: string;
     onClickItems: ObjectItem[];
@@ -30,7 +30,7 @@ export interface BuiltSeries {
 function attributeValueToX(value: unknown): { x: string | number; isDate: boolean } {
     if (value === undefined || value === null) return { x: "", isDate: false };
     if (value instanceof Date) return { x: value.getTime(), isDate: true };
-    if (value instanceof Big) return { x: value.toFixed(2), isDate: false };
+    if (value instanceof Big) return { x: value.toNumber(), isDate: false };
     return { x: String(value), isDate: false };
 }
 
@@ -67,6 +67,7 @@ function buildStaticSeries(line: LinesType): BuiltSeries[] {
     if (!ds || ds.status !== "available" || !ds.items) return [];
 
     const items = ds.items;
+    const staticColorDimAttribute = (line as any).staticColorDimAttribute;
     let xIsDateTime = false;
     const rawPoints: DataPoint[] = items.map(item => {
         const xResult = line.staticXAttribute
@@ -78,6 +79,9 @@ function buildStaticSeries(line: LinesType): BuiltSeries[] {
             y: line.staticYAttribute
                 ? attributeValueToNumber(line.staticYAttribute.get(item).value)
                 : 0,
+            colorDim: staticColorDimAttribute
+                ? attributeValueToNumber(staticColorDimAttribute.get(item).value)
+                : undefined,
             tooltip: line.staticTooltipHoverText?.get(item).value ?? undefined
         };
     });
@@ -108,7 +112,7 @@ function buildStaticSeries(line: LinesType): BuiltSeries[] {
             xIsDateTime,
             lineColor,
             markerColor,
-            data: points.map(p => [p.x, p.y]),
+            data: points.map(p => p.colorDim !== undefined ? [p.x, p.y, p.colorDim] : [p.x, p.y]),
             tooltips: points.map(p => p.tooltip ?? ""),
             customSeriesOptions: line.customSeriesOptions,
             onClickItems: items,
@@ -122,6 +126,7 @@ function buildDynamicSeries(line: LinesType): BuiltSeries[] {
     if (!ds || ds.status !== "available" || !ds.items) return [];
 
     const items = ds.items;
+    const dynamicColorDimAttribute = (line as any).dynamicColorDimAttribute;
 
     // Group items by the groupByAttribute value
     const groups = new Map<string, ObjectItem[]>();
@@ -147,6 +152,9 @@ function buildDynamicSeries(line: LinesType): BuiltSeries[] {
                 y: line.dynamicYAttribute
                     ? attributeValueToNumber(line.dynamicYAttribute.get(item).value)
                     : 0,
+                colorDim: dynamicColorDimAttribute
+                    ? attributeValueToNumber(dynamicColorDimAttribute.get(item).value)
+                    : undefined,
                 tooltip: line.dynamicTooltipHoverText?.get(item).value ?? undefined
             };
         });
@@ -180,7 +188,7 @@ function buildDynamicSeries(line: LinesType): BuiltSeries[] {
             xIsDateTime,
             lineColor,
             markerColor,
-            data: points.map(p => [p.x, p.y]),
+            data: points.map(p => p.colorDim !== undefined ? [p.x, p.y, p.colorDim] : [p.x, p.y]),
             tooltips: points.map(p => p.tooltip ?? ""),
             customSeriesOptions: line.customSeriesOptions,
             onClickItems: groupItems,

@@ -25,6 +25,8 @@ export interface SeriesType {
     aggregationType: AggregationTypeEnum;
     staticTooltipHoverText?: ListExpressionValue<string>;
     dynamicTooltipHoverText?: ListExpressionValue<string>;
+    staticColorDimAttribute?: ListAttributeValue<Big>;
+    dynamicColorDimAttribute?: ListAttributeValue<Big>;
     staticBarColor?: ListExpressionValue<string>;
     dynamicBarColor?: ListExpressionValue<string>;
     staticOnClickAction?: ListActionValue;
@@ -56,6 +58,8 @@ export interface SeriesPreviewType {
     aggregationType: AggregationTypeEnum;
     staticTooltipHoverText: string;
     dynamicTooltipHoverText: string;
+    staticColorDimAttribute: string;
+    dynamicColorDimAttribute: string;
     staticBarColor: string;
     dynamicBarColor: string;
     staticOnClickAction: {} | null;

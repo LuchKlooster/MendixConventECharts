@@ -15,11 +15,14 @@ The package ships four widgets:
 
 All widgets share a consistent design: connect a Mendix data source, map attributes, and optionally fine-tune with a JSON override — no custom JavaScript required.
 
-A live demo Mendix project is available at **[github.com/LuchKlooster/MendixConventEChartsDemo](https://github.com/LuchKlooster/MendixConventEChartsDemo)**.
+A demo Mendix project is available at **[github.com/LuchKlooster/MendixConventEChartsDemo](https://github.com/LuchKlooster/MendixConventEChartsDemo)**.    
+Demo project is live to be seen at **[https://echartsdemo100-sandbox.mxapps.io/index.html](https://echartsdemo100-sandbox.mxapps.io/index.html)**.
 
 ---
 
+
 ## Common concepts
+
 
 ### Data set modes
 
@@ -28,13 +31,16 @@ The Line and Bar charts support two modes per series, selectable via **Data set*
 - **Single series** — one data source, one line or bar group. Use this when each record is one data point.
 - **Multiple series** — one data source split into series by a **Group by** attribute. All records go into one query; ECharts divides them by the group value automatically.
 
+
 ### Aggregation
 
 When multiple records share the same X / category value, the widget can aggregate before rendering. Available functions: None, Count, Sum, Average, Minimum, Maximum, Median, Mode, First, Last. Set to **None** if your data is already aggregated.
 
+
 ### Legend
 
 All four widgets support showing or hiding the legend. Position can be set to **Top**, **Bottom**, **Left**, or **Right**. Left/Right positions use a vertical legend orientation; the chart grid automatically adjusts its margins to prevent overlap.
+
 
 ### Dimensions
 
@@ -45,9 +51,12 @@ Each widget has an independent **Width** and **Height** setting:
 
 Default is 100% wide × 75% of width, giving a 4:3 landscape proportion.
 
+
 ### Advanced — Custom chart option
 
-Every widget exposes a **Custom chart option** field. Enter a JSON object that is deep-merged into the ECharts option at render time. This gives access to the full ECharts API — colors, fonts, toolbox, data zoom, custom marklines, and more — without touching code.
+Every widget exposes a **Custom chart option** field. Enter a JSON object that is deep-merged into the ECharts option at render time. This gives access to a broad set of ECharts features — colors, fonts, toolbox, data zoom, mark lines, mark areas, visual map, brush selection, polar coordinates, and more — without touching code.
+
+When **Custom chart option** contains a value, the datasource validation on series is relaxed — series entries without a datasource are allowed. This makes it possible to render a fully custom chart (e.g. a polar chart with all data embedded in the option) without configuring any Mendix datasource on the widget.
 
 Example — add a data zoom slider to a line chart:
 
@@ -56,6 +65,7 @@ Example — add a data zoom slider to a line chart:
   "dataZoom": [{ "type": "slider", "xAxisIndex": 0 }]
 }
 ```
+
 
 ### Advanced — Custom init options
 
@@ -67,11 +77,14 @@ A JSON object passed directly to `echarts.init()`. Use this to change the render
 
 ---
 
+
 ## ECharts Line chart
 
 ![ECharts Line chart](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsLineChart.png)
 
+
 Renders one or more lines on a shared X/Y axis. Supports area fill, curved interpolation, data point markers, and an animated timeline slider.
+
 
 ### Series properties
 
@@ -96,6 +109,7 @@ Each entry in the **Series** list defines one line (or a group of lines in Multi
 | Timeline attribute | Groups records into timeline steps. Each unique value is one step |
 | Custom series options | JSON merged into this series' ECharts series config (active when Line style = Custom) |
 
+
 ### Chart-level properties
 
 | Property | Description |
@@ -106,6 +120,7 @@ Each entry in the **Series** list defines one line (or a group of lines in Multi
 | Show legend / Legend position | Toggle and position the series legend |
 | Grid lines | **None**, **Horizontal**, **Vertical**, or **Both** |
 | Background color | CSS color for the chart canvas background. Leave empty for transparent |
+
 
 ### Timeline
 
@@ -122,11 +137,14 @@ When **Enable timeline** is on and at least one series has a **Timeline attribut
 
 ---
 
+
 ## ECharts Bar chart
 
 ![ECharts Bar chart](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsBarChart.png)
 
+
 Renders one or more bar series on a shared category/value axis. Bars can be vertical or horizontal, grouped side-by-side, or stacked. Shares the same timeline feature as the Line chart.
+
 
 ### Bar series properties
 
@@ -144,6 +162,70 @@ Renders one or more bar series on a shared category/value axis. Bars can be vert
 | On click action | Mendix action triggered on bar click |
 | Timeline attribute | Groups records into timeline steps |
 | Custom series options | JSON merged into the ECharts series config for this bar series |
+
+
+### Bar series appearance — Color dimension
+
+Each bar series has an optional **Color dimension attribute**. When set, the widget passes the attribute value as a third data dimension alongside the category and bar value. Combined with a `visualMap` in **Custom chart option**, this lets ECharts color each bar individually based on a separate numeric score — independent of the bar's height or length.
+
+The color dimension data is exposed as the named dimension **`colorDim`** (index 2) in the ECharts dataset. Reference it in `visualMap` with `"dimension": "colorDim"` (or `"dimension": 2`).
+
+
+#### Example — horizontal bars colored by score
+
+Series setup:
+
+| Setting | Value |
+| --- | --- |
+| Category attribute | Product name |
+| Value attribute | Amount sold |
+| Color dimension attribute | Score (0–100) |
+| Bar color | *(leave empty)* |
+
+Custom chart option — visualMap on the right:
+
+```json
+{
+  "visualMap": {
+    "show": true,
+    "min": 0,
+    "max": 100,
+    "dimension": "colorDim",
+    "orient": "vertical",
+    "right": 10,
+    "top": "center",
+    "text": ["High score", "Low score"],
+    "inRange": {
+      "color": ["#50a3ba", "#eac736", "#d94e5d"]
+    }
+  },
+  "grid": { "right": "15%" }
+}
+```
+
+Custom chart option — visualMap at the bottom:
+
+```json
+{
+  "visualMap": {
+    "show": true,
+    "min": 0,
+    "max": 100,
+    "dimension": "colorDim",
+    "orient": "horizontal",
+    "left": "center",
+    "bottom": 0,
+    "text": ["High score", "Low score"],
+    "inRange": {
+      "color": ["#50a3ba", "#eac736", "#d94e5d"]
+    }
+  },
+  "grid": { "bottom": "15%" }
+}
+```
+
+> The `grid` override reserves space so the visualMap does not overlap the bars. Adjust the percentage to match the number of text lines and gradient bar height. Set `"Bar color"` to empty when using visualMap — otherwise the series color overrides the visualMap coloring.
+
 
 ### Bar chart-level properties
 
@@ -163,11 +245,14 @@ The **Timeline** settings are identical to the Line chart.
 
 ---
 
+
 ## ECharts Pie / Donut chart
 
 ![ECharts Pie / Donut chart](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsPieChart.png)
 
+
 Renders one or more concentric pie rings. Can be configured as a standard pie, a donut, or a Nightingale rose chart. Does not have X/Y axes; data is a list of slices with a label and a numeric value.
+
 
 ### Pie series properties
 
@@ -187,6 +272,7 @@ Each entry in the **Series** list defines one ring (concentric charts use multip
 | On click action | Mendix action triggered on slice click |
 | Custom series options | JSON merged into this ring's ECharts series config |
 
+
 ### Pie chart-level properties
 
 | Property | Description |
@@ -200,14 +286,17 @@ Each entry in the **Series** list defines one ring (concentric charts use multip
 
 ---
 
+
 ## ECharts Gauge chart
 
 ![ECharts Gauge chart](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsGaugeChart.png)
+
 
 Renders a speedometer-style gauge. Supports two modes:
 
 - **Context mode** — up to three fixed series read from a surrounding Data View. Best for a small, known set of attributes (e.g. a clock with Hour, Minute, Second).
 - **List mode** — a list data source where every record becomes one needle in a single shared series. Best for a variable number of items stored as rows in a persistent entity (e.g. Good / Better / Perfect KPI indicators).
+
 
 ### Setup — context mode
 
@@ -215,6 +304,7 @@ Renders a speedometer-style gauge. Supports two modes:
 2. Place the **ECharts Gauge Chart** widget inside the Data View.
 3. In **Series 1**, set **Value attribute** to the primary attribute.
 4. Optionally set **Series 2** and **Series 3** to additional attributes — this activates multi-series mode automatically.
+
 
 ### Setup — list mode (multi-needle)
 
@@ -225,6 +315,7 @@ Renders a speedometer-style gauge. Supports two modes:
 5. Paste the series styling in **Custom options (list series)**.
 
 The widget automatically spaces title and detail labels evenly across the dial. For 3 items the positions are −40 %, 0 %, and 40 %; for any other count they are calculated proportionally.
+
 
 ### Multi-needle (list) properties
 
@@ -237,6 +328,7 @@ Visible only when **Use list data source** is enabled.
 | Value attribute | Numeric attribute for the needle value |
 | Label attribute | String or Enum attribute for the needle label |
 | Custom options (list series) | JSON merged into the shared ECharts series config — pointer style, progress, anchor, detail formatter, etc. |
+
 
 ### Series configuration (context mode)
 
@@ -252,6 +344,7 @@ The widget has three series groups: **Series 1**, **Series 2**, and **Series 3**
 
 The **Minimum** and **Maximum** for Series 1 are taken from the General **Minimum** / **Maximum** properties.
 
+
 ### Scale properties
 
 | Property | Description |
@@ -265,6 +358,7 @@ The **Minimum** and **Maximum** for Series 1 are taken from the General **Minimu
 
 The default start/end angles (225° / -45°) produce the classic speedometer arc with a gap at the bottom.
 
+
 ### Appearance properties
 
 | Property | Description |
@@ -273,6 +367,7 @@ The default start/end angles (225° / -45°) produce the classic speedometer arc
 | Color ranges | JSON array of `[threshold, color]` pairs. Each threshold is a **fraction** (0–1) of the full scale range. The last pair should always be `[1, "color"]` |
 | Show legend / Legend position | Toggle and position the needle legend |
 | Background color | CSS background color |
+
 
 #### Color ranges explained
 
@@ -283,6 +378,7 @@ Color ranges define the background color of the gauge arc in bands. A threshold 
 ```
 
 This produces: teal for the lower 30%, blue for 30–70%, red for 70–100%.
+
 
 ### Formatter functions
 
@@ -299,6 +395,7 @@ Example — hide the `0` label on the clock face:
 ```
 
 Any valid single-argument ECharts formatter function body can be used here.
+
 
 ### Multi-series tips
 
@@ -430,6 +527,7 @@ In multi-series mode each series renders its own axis decorations (arc, ticks, l
 }
 ```
 
+
 ### Multi-needle list mode example
 
 Based on the [Apache ECharts multi-title gauge example](https://echarts.apache.org/examples/en/editor.html?c=gauge-multi-title).
@@ -472,6 +570,7 @@ Based on the [Apache ECharts multi-title gauge example](https://echarts.apache.o
 
 > **Note:** Set `"animation": false` to prevent ghost needle trails when values update frequently. The label positions (`-40%`, `0%`, `40%` for 3 items) are calculated automatically — no manual offset configuration is needed.
 
+
 ### Clock gauge example
 
 A clock gauge maps `Hour` (0–12), `Minute` (0–60), and `Second` (0–60) attributes from a Data View onto three series:
@@ -487,6 +586,58 @@ A clock gauge maps `Hour` (0–12), `Minute` (0–60), and `Second` (0–60) att
 Use the **Custom options** blocks above for each series. The result matches the [Apache ECharts clock gauge example](https://echarts.apache.org/examples/en/editor.html?c=gauge-clock).
 
 ---
+
+
+## Polar line chart
+
+The Line chart widget supports polar coordinate charts by combining a Mendix datasource with Custom series options and Custom chart option.
+
+
+### Example — Two Value-Axes in Polar
+
+Based on the [Apache ECharts polar line example](https://echarts.apache.org/examples/en/editor.html?c=line-polar2).
+
+**Setup:**
+
+1. Create a persistent entity (e.g. `TwoValueAxesInPolar`) with attributes:
+   - `r` — Decimal (radius value, computed as `sin(2t) * cos(2t)`)
+   - `i` — Integer (angle, 0–360)
+2. Populate 361 records, one per degree.
+3. Add an **ECharts Line Chart** widget to your page (no surrounding Data View needed).
+4. Add one series entry, configured as follows:
+
+**General tab:**
+
+| Setting | Value |
+| --- | --- |
+| Data source | Database datasource on your entity, **sorted by `i` ascending** |
+| Series name | `line` |
+| X axis attribute | `r` (radius) |
+| Y axis attribute | `i` (angle) |
+
+**Appearance tab:**
+
+| Setting | Value |
+| --- | --- |
+| Line style | **Custom** |
+
+**Advanced tab (series):**
+
+```json
+{"coordinateSystem":"polar","showSymbol":false}
+```
+
+**Advanced tab (widget) — Custom chart option:**
+
+```json
+{"title":{"text":"Two Value-Axes in Polar","left":"center"},"polar":{"center":["50%","54%"]},"angleAxis":{"type":"value","startAngle":0},"radiusAxis":{"min":0},"xAxis":{"show":false},"yAxis":{"show":false},"grid":{"show":false}}
+```
+
+> **Important:** The datasource must be sorted by `i` (angle) ascending. ECharts connects data points in the order they arrive — wrong order produces a zig-zag line instead of smooth petals.
+> **Decimal precision:** The widget passes Decimal X-axis values at full precision. For polar charts this ensures smooth curves — no rounding artefacts.
+
+---
+
 
 ## Tips and tricks
 
@@ -507,6 +658,7 @@ if $currentObject/Status = 'Critical' then '#e74c3c' else '#2ecc71'
 **Responsive sizing** — Use **Percentage of width** height with a value of `56` to get a 16:9 chart that scales with the page column width.
 
 ---
+
 
 ## License
 

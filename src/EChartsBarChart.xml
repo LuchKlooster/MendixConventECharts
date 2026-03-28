@@ -124,6 +124,26 @@
                             </property>
                         </propertyGroup>
                         <propertyGroup caption="Appearance">
+                            <property key="staticColorDimAttribute" type="attribute" required="false" dataSource="staticDataSource">
+                                <caption>Color dimension attribute</caption>
+                                <description>Optional numeric attribute used to color bars via visualMap. Use dimension: "colorDim" (or 2) in your Custom chart option visualMap. Leave empty to use a solid bar color.</description>
+                                <attributeTypes>
+                                    <attributeType name="Decimal" />
+                                    <attributeType name="Integer" />
+                                    <attributeType name="Long" />
+                                    <attributeType name="AutoNumber" />
+                                </attributeTypes>
+                            </property>
+                            <property key="dynamicColorDimAttribute" type="attribute" required="false" dataSource="dynamicDataSource">
+                                <caption>Color dimension attribute</caption>
+                                <description>Optional numeric attribute used to color bars via visualMap. Use dimension: "colorDim" (or 2) in your Custom chart option visualMap. Leave empty to use a solid bar color.</description>
+                                <attributeTypes>
+                                    <attributeType name="Decimal" />
+                                    <attributeType name="Integer" />
+                                    <attributeType name="Long" />
+                                    <attributeType name="AutoNumber" />
+                                </attributeTypes>
+                            </property>
                             <property key="staticBarColor" type="expression" required="false" dataSource="staticDataSource">
                                 <caption>Bar color</caption>
                                 <description>CSS color value, e.g. #FF0000 or red</description>

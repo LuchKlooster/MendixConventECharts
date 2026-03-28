@@ -1,15 +1,17 @@
 import { ReactElement, useEffect, useRef } from "react";
 import * as echarts from "echarts/core";
 import { GaugeChart as EChartsGaugeChart } from "echarts/charts";
-import { TooltipComponent, LegendComponent } from "echarts/components";
+import { TooltipComponent, LegendComponent, TitleComponent } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import type { EChartsOption, GaugeSeriesOption } from "echarts";
 
-echarts.use([EChartsGaugeChart, TooltipComponent, LegendComponent, CanvasRenderer]);
+echarts.use([EChartsGaugeChart, TooltipComponent, LegendComponent, TitleComponent, CanvasRenderer]);
 
 export interface GaugePointer {
     name: string;
     value: number;
+    titleOffset?: [string | number, string | number];
+    detailOffset?: [string | number, string | number];
 }
 
 export interface GaugeSeries {
@@ -94,14 +96,14 @@ function buildBaseSeries(
         splitNumber,
         progress: { show: showProgress, width: 10 },
         axisLine: { lineStyle: { width: 10, color: colors } },
-        pointer: { itemStyle: { color: "auto" } },
+        pointer: { itemStyle: { color: "inherit" } },
         axisTick: { show: true },
         splitLine: { length: 15, lineStyle: { width: 2, color: "#999" } },
         axisLabel: { distance: 15, color: "#999", fontSize: 12 },
         detail: {
             valueAnimation: true,
             formatter: units ? `{value} ${units}` : "{value}",
-            color: "auto",
+            color: "inherit",
             fontSize: 20
         }
     };
@@ -158,7 +160,12 @@ function buildEChartsOption(props: GaugeChartProps): EChartsOption {
             );
             const withData: GaugeSeriesOption = {
                 ...base,
-                data: s.pointers.map(p => ({ name: p.name, value: p.value }))
+                data: s.pointers.map(p => ({
+                    name: p.name,
+                    value: p.value,
+                    ...(p.titleOffset ? { title: { offsetCenter: p.titleOffset } } : {}),
+                    ...(p.detailOffset ? { detail: { offsetCenter: p.detailOffset } } : {})
+                }))
             };
             if (s.customSeriesOptions) {
                 try {
@@ -171,7 +178,12 @@ function buildEChartsOption(props: GaugeChartProps): EChartsOption {
         });
     } else {
         const base = buildBaseSeries(min, max, startAngle, endAngle, splitNumber, showProgress, colors, units);
-        seriesArray = [{ ...base, data: pointers.map(p => ({ name: p.name, value: p.value })) }];
+        seriesArray = [{ ...base, data: pointers.map(p => ({
+            name: p.name,
+            value: p.value,
+            ...(p.titleOffset ? { title: { offsetCenter: p.titleOffset } } : {}),
+            ...(p.detailOffset ? { detail: { offsetCenter: p.detailOffset } } : {})
+        })) }];
     }
 
     const option: EChartsOption = {
@@ -214,11 +226,19 @@ export function GaugeChart(props: GaugeChartProps): ReactElement {
     // Keep propsRef current on every render (no side effects)
     propsRef.current = props;
 
-    // Update option on every render
+    // Serialize data to a stable string so setOption is only called when values actually change
+    const optionKey = JSON.stringify(
+        (props.seriesList ?? [{ pointers: props.pointers }]).map(s =>
+            s.pointers.map(p => ({ n: p.name, v: p.value }))
+        )
+    ) + props.colorRanges + props.min + props.max + props.customOption + (props.seriesList?.map(s => s.customSeriesOptions).join("") ?? "");
+
+    // Update option only when data or config actually changes
     useEffect(() => {
         if (!chartRef.current) return;
-        chartRef.current.setOption(buildEChartsOption(props) as EChartsOption, { notMerge: true });
-    });
+        chartRef.current.setOption(buildEChartsOption(propsRef.current) as EChartsOption, { notMerge: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [optionKey]);
 
     // Click handler — registered once, reads current props via ref to avoid re-registering on every render
     useEffect(() => {

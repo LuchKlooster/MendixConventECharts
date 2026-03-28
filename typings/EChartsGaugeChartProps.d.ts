@@ -4,7 +4,7 @@
  * @author Mendix Widgets Framework Team
  */
 import { CSSProperties } from "react";
-import { DynamicValue, EditableValue } from "mendix";
+import { DynamicValue, EditableValue, ListValue, ListAttributeValue } from "mendix";
 import { Big } from "big.js";
 
 export type LegendPositionEnum = "top" | "bottom" | "left" | "right";
@@ -18,6 +18,11 @@ export interface EChartsGaugeChartContainerProps {
     class: string;
     style?: CSSProperties;
     tabIndex?: number;
+    useListMode: boolean;
+    dataSource?: ListValue;
+    listValueAttribute?: ListAttributeValue<Big>;
+    listLabelAttribute?: ListAttributeValue<string>;
+    listCustomOptions: string;
     valueAttribute?: EditableValue<Big>;
     labelAttribute?: DynamicValue<string>;
     series1CustomOptions: string;
@@ -62,6 +67,11 @@ export interface EChartsGaugeChartPreviewProps {
     readOnly: boolean;
     renderMode: "design" | "xray" | "structure";
     translate: (text: string) => string;
+    useListMode: boolean;
+    dataSource: {} | { caption: string } | { type: string } | null;
+    listValueAttribute: string;
+    listLabelAttribute: string;
+    listCustomOptions: string;
     valueAttribute: string;
     labelAttribute: string;
     series1CustomOptions: string;

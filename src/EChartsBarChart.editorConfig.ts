@@ -36,12 +36,12 @@ export function getProperties(values: any, defaultProperties: Properties): Prope
             hideInObject(defaultProperties, "series", i, [
                 "dynamicDataSource", "groupByAttribute", "dynamicName",
                 "dynamicXAttribute", "dynamicYAttribute", "dynamicTooltipHoverText",
-                "dynamicBarColor", "dynamicOnClickAction", "dynamicTimelineAttribute"
+                "dynamicBarColor", "dynamicColorDimAttribute", "dynamicOnClickAction", "dynamicTimelineAttribute"
             ]);
         } else {
             hideInObject(defaultProperties, "series", i, [
                 "staticDataSource", "staticName", "staticXAttribute", "staticYAttribute",
-                "staticTooltipHoverText", "staticBarColor", "staticOnClickAction", "staticTimelineAttribute"
+                "staticTooltipHoverText", "staticBarColor", "staticColorDimAttribute", "staticOnClickAction", "staticTimelineAttribute"
             ]);
         }
     });
@@ -61,7 +61,12 @@ export function getProperties(values: any, defaultProperties: Properties): Prope
 
 export function check(values: any): Problem[] {
     const errors: Problem[] = [];
+    const hasCustomLayout = !!values.customLayout?.trim();
+
     values.series?.forEach((s: any, i: number) => {
+        if (hasCustomLayout) {
+            return;
+        }
         if (s.dataSet === "static" && !s.staticDataSource) {
             errors.push({ property: `series/${i + 1}/staticDataSource`, message: "A data source is required.", severity: "error" });
         } else if (s.dataSet === "dynamic" && !s.dynamicDataSource) {

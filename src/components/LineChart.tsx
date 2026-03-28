@@ -6,7 +6,15 @@ import {
     TooltipComponent,
     LegendComponent,
     TitleComponent,
-    TimelineComponent
+    TimelineComponent,
+    DataZoomComponent,
+    MarkLineComponent,
+    MarkAreaComponent,
+    MarkPointComponent,
+    ToolboxComponent,
+    BrushComponent,
+    VisualMapComponent,
+    PolarComponent
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import type { EChartsOption, LineSeriesOption } from "echarts";
@@ -15,7 +23,7 @@ import { GridLinesEnum } from "../../typings/EChartsLineChartProps";
 import { formatTimestamp } from "../utils/dateFormat";
 import { buildTimelineOption, TimelineConfig } from "../utils/timelineBuilder";
 
-echarts.use([EChartsLineChart, GridComponent, TooltipComponent, LegendComponent, TitleComponent, TimelineComponent, CanvasRenderer]);
+echarts.use([EChartsLineChart, GridComponent, TooltipComponent, LegendComponent, TitleComponent, TimelineComponent, DataZoomComponent, MarkLineComponent, MarkAreaComponent, MarkPointComponent, ToolboxComponent, BrushComponent, VisualMapComponent, PolarComponent, CanvasRenderer]);
 
 export interface LineChartProps {
     series: BuiltSeries[];

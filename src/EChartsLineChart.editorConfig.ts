@@ -117,7 +117,13 @@ export function getProperties(
 export function check(values: EChartsLineChartPreviewProps): Problem[] {
     const errors: Problem[] = [];
 
+    const hasCustomLayout = !!values.customLayout?.trim();
+
     values.lines.forEach((line, i) => {
+        if (hasCustomLayout) {
+            // Custom chart option provides the full chart definition — datasource not required
+            return;
+        }
         if (line.dataSet === "static") {
             if (!line.staticDataSource) {
                 errors.push({

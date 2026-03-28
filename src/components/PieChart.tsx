@@ -1,12 +1,12 @@
 import { ReactElement, useEffect, useRef } from "react";
 import * as echarts from "echarts/core";
 import { PieChart as EChartsPieChart } from "echarts/charts";
-import { TooltipComponent, LegendComponent } from "echarts/components";
+import { TooltipComponent, LegendComponent, TitleComponent } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import type { EChartsOption, PieSeriesOption } from "echarts";
 import { ObjectItem } from "mendix";
 
-echarts.use([EChartsPieChart, TooltipComponent, LegendComponent, CanvasRenderer]);
+echarts.use([EChartsPieChart, TooltipComponent, LegendComponent, TitleComponent, CanvasRenderer]);
 
 export interface PieSlice {
     name: string;

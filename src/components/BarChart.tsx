@@ -5,7 +5,17 @@ import {
     GridComponent,
     TooltipComponent,
     LegendComponent,
-    TimelineComponent
+    TitleComponent,
+    TimelineComponent,
+    DataZoomComponent,
+    MarkLineComponent,
+    MarkAreaComponent,
+    MarkPointComponent,
+    ToolboxComponent,
+    BrushComponent,
+    VisualMapComponent,
+    PolarComponent,
+    DatasetComponent
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import type { EChartsOption, BarSeriesOption } from "echarts";
@@ -13,7 +23,7 @@ import { BuiltSeries } from "../utils/seriesBuilder";
 import { buildTimelineOption, TimelineConfig } from "../utils/timelineBuilder";
 import { formatTimestamp } from "../utils/dateFormat";
 
-echarts.use([EChartsBarChart, GridComponent, TooltipComponent, LegendComponent, TimelineComponent, CanvasRenderer]);
+echarts.use([EChartsBarChart, GridComponent, TooltipComponent, LegendComponent, TitleComponent, TimelineComponent, DataZoomComponent, MarkLineComponent, MarkAreaComponent, MarkPointComponent, ToolboxComponent, BrushComponent, VisualMapComponent, PolarComponent, DatasetComponent, CanvasRenderer]);
 
 export interface BarChartProps {
     series: BuiltSeries[];
@@ -80,13 +90,13 @@ function collectCategories(series: BuiltSeries[], dateFormat?: string): string[]
 
 /**
  * Maps series data to a positional array aligned with the categories array.
- * Used for both horizontal and vertical bars so ECharts always receives plain
- * value arrays rather than [x, y] tuples (which would require exact type
- * matching between the data x-value and the category axis labels).
+ * Used when no colorDim is present.
  */
 function toPositionalData(s: BuiltSeries, categories: string[], xIsDateTime: boolean, dateFormat?: string): Array<number | null> {
     const map = new Map<string, number>();
-    s.data.forEach(([x, y]) => map.set(formatCategory(x, xIsDateTime, dateFormat), y));
+    s.data.forEach(point => {
+        map.set(formatCategory(point[0], xIsDateTime, dateFormat), point[1]);
+    });
     return categories.map(cat => map.get(cat) ?? null);
 }
 
@@ -131,29 +141,74 @@ function buildEChartsOption(props: BarChartProps): EChartsOption {
     const showCatGrid = gridLines === "vertical" || gridLines === "both";
     const showValGrid = gridLines === "horizontal" || gridLines === "both";
 
-    const eChartsSeries: BarSeriesOption[] = series.map((s, index) => {
-        const data = toPositionalData(s, categories, xIsDateTime, xAxisDateFormat);
-        const positionalTooltips = toPositionalTooltips(s, categories, xIsDateTime, xAxisDateFormat);
+    // When any series has a colorDim, use ECharts dataset so that visualMap
+    // can reference the colorDim by name/index without conflicting with bar length.
+    const anyColorDim = series.some(s => s.data.some(p => p.length === 3));
 
-        const baseSeries: BarSeriesOption = {
-            name: s.name,
-            type: "bar",
-            stack: stack ? "total" : undefined,
-            barWidth: barWidth || undefined,
-            data,
-            itemStyle: {
-                color: s.lineColor ?? undefined  // lineColor holds the bar color from the builder
-            },
-            tooltip: {
-                formatter: positionalTooltips.some(t => t)
-                    ? (params: unknown) => {
-                          const p = params as { dataIndex: number; seriesName: string; value: unknown };
-                          const tooltip = positionalTooltips[p.dataIndex];
-                          return tooltip || `${p.seriesName}: ${p.value ?? "-"}`;
-                      }
-                    : undefined
-            }
-        };
+    // datasets[i] corresponds to series[i] when anyColorDim is true.
+    const datasets: Array<{ dimensions: string[]; source: Array<[string, number | null, number | null]> }> = [];
+
+    const eChartsSeries: BarSeriesOption[] = series.map((s, index) => {
+        const positionalTooltips = toPositionalTooltips(s, categories, xIsDateTime, xAxisDateFormat);
+        const hasTooltips = positionalTooltips.some(t => t);
+
+        const tooltipFormatter = hasTooltips
+            ? (params: unknown) => {
+                  const p = params as { dataIndex: number; seriesName: string; value: unknown };
+                  const tooltip = positionalTooltips[p.dataIndex];
+                  // With dataset, params.value is the full row array; extract the "value" column (index 1).
+                  const displayVal = anyColorDim && Array.isArray(p.value)
+                      ? (p.value as unknown[])[1]
+                      : p.value;
+                  return tooltip || `${p.seriesName}: ${displayVal ?? "-"}`;
+              }
+            : undefined;
+
+        let baseSeries: BarSeriesOption;
+
+        if (anyColorDim) {
+            // Build a dataset for this series: dimensions = [category, value, colorDim]
+            const dataMap = new Map<string, { value: number; colorDim: number | null }>();
+            s.data.forEach(point => {
+                const cat = formatCategory(point[0], xIsDateTime, xAxisDateFormat);
+                dataMap.set(cat, {
+                    value: point[1],
+                    colorDim: point.length === 3 ? (point as [string | number, number, number])[2] : null
+                });
+            });
+
+            const source: Array<[string, number | null, number | null]> = categories.map(cat => {
+                const entry = dataMap.get(cat);
+                return [cat, entry?.value ?? null, entry?.colorDim ?? null];
+            });
+
+            const datasetIndex = datasets.length;
+            datasets.push({ dimensions: ["category", "value", "colorDim"], source });
+
+            baseSeries = {
+                name: s.name,
+                type: "bar",
+                stack: stack ? "total" : undefined,
+                barWidth: barWidth || undefined,
+                datasetIndex,
+                encode: horizontal
+                    ? { x: "value", y: "category" }
+                    : { y: "value", x: "category" },
+                itemStyle: { color: s.lineColor ?? undefined },
+                tooltip: { formatter: tooltipFormatter }
+            };
+        } else {
+            const data = toPositionalData(s, categories, xIsDateTime, xAxisDateFormat);
+            baseSeries = {
+                name: s.name,
+                type: "bar",
+                stack: stack ? "total" : undefined,
+                barWidth: barWidth || undefined,
+                data,
+                itemStyle: { color: s.lineColor ?? undefined },
+                tooltip: { formatter: tooltipFormatter }
+            };
+        }
 
         if (s.customSeriesOptions) {
             try {
@@ -166,6 +221,10 @@ function buildEChartsOption(props: BarChartProps): EChartsOption {
 
         return baseSeries;
     });
+
+    // When using dataset, the category axis derives its labels from the dataset;
+    // supplying axis.data as well would cause duplicates / ordering conflicts.
+    const catAxisData = anyColorDim ? undefined : categories;
 
     const option: EChartsOption = horizontal
         ? {
@@ -183,7 +242,7 @@ function buildEChartsOption(props: BarChartProps): EChartsOption {
               },
               yAxis: {
                   type: "category",
-                  data: categories,
+                  data: catAxisData,
                   name: categoryAxisLabel || undefined,
                   nameLocation: "middle",
                   nameGap: 60,
@@ -198,7 +257,7 @@ function buildEChartsOption(props: BarChartProps): EChartsOption {
               grid: { left: legendPosition === "left" ? "20%" : "3%", right: legendPosition === "right" ? "20%" : "4%", bottom: categoryAxisLabel ? 60 : 30, containLabel: true },
               xAxis: {
                   type: "category",
-                  data: categories,
+                  data: catAxisData,
                   name: categoryAxisLabel || undefined,
                   nameLocation: "middle",
                   nameGap: 30,
@@ -214,6 +273,10 @@ function buildEChartsOption(props: BarChartProps): EChartsOption {
               },
               series: eChartsSeries
           };
+
+    if (anyColorDim) {
+        (option as Record<string, unknown>).dataset = datasets;
+    }
 
     if (props.customOption) {
         try {
