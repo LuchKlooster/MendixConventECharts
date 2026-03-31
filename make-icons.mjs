@@ -5,6 +5,7 @@
  *   EChartsLineChart.*
  *   EChartsPieChart.*
  *   EChartsGaugeChart.*
+ *   EChartsThemeLoader.*
  *
  * Run: node make-icons.mjs
  */
@@ -14,9 +15,15 @@ import fs   from 'fs';
 import path from 'path';
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
-const NAVY = [45, 64, 89, 255];       // #2D4059
-const RED  = [179, 48, 48, 255];      // #B33030
-const GRAY = [200, 200, 200, 255];    // #C8C8C8
+const NAVY   = [45,  64,  89,  255];   // #2D4059
+const RED    = [179, 48,  48,  255];   // #B33030
+const GRAY   = [200, 200, 200, 255];   // #C8C8C8
+const CREAM  = [240, 218, 175, 255];   // palette body
+const ORANGE = [220, 105, 40,  255];   // orange blob
+const GREEN  = [55,  140, 65,  255];   // green blob
+const YELLOW = [225, 195, 50,  255];   // yellow blob
+const BROWN  = [110, 72,  30,  255];   // brush handle
+const DARK   = [40,  40,  40,  255];   // brush bristles
 
 const DEG = Math.PI / 180;
 
@@ -114,6 +121,26 @@ function drawArc(px,W,H,cx,cy,ri,ro,a1_cwTop,span,col){
         }
 }
 
+// Fill axis-aligned ellipse
+function fillEllipse(px,W,H,cx,cy,rx,ry,col){
+    for(let y=Math.floor(cy-ry-1);y<=Math.ceil(cy+ry+1);y++)
+        for(let x=Math.floor(cx-rx-1);x<=Math.ceil(cx+rx+1);x++){
+            const dx=x-cx, dy=y-cy;
+            if((dx*dx)/(rx*rx)+(dy*dy)/(ry*ry)<=1.0) put(px,W,H,x,y,col);
+        }
+}
+
+// Punch a transparent hole (ellipse-shaped)
+function eraseEllipse(px,W,H,cx,cy,rx,ry){
+    for(let y=Math.floor(cy-ry-1);y<=Math.ceil(cy+ry+1);y++)
+        for(let x=Math.floor(cx-rx-1);x<=Math.ceil(cx+rx+1);x++){
+            const dx=x-cx, dy=y-cy;
+            if((dx*dx)/(rx*rx)+(dy*dy)/(ry*ry)<=1.0){
+                if(x>=0&&x<W&&y>=0&&y<H) px[(y*W+x)*4+3]=0;
+            }
+        }
+}
+
 // ─── Chart renderers (s = scale factor relative to 32×32 grid) ───────────────
 
 function renderBar(px, W, H, s) {
@@ -161,6 +188,26 @@ function renderGauge(px, W, H, s) {
     fillSector(px,W,H,cx,cy,3*s,0,2*Math.PI,RED);   // center cap
 }
 
+function renderPalette(px, W, H, s) {
+    // Palette body: wide oval, lower-left area of canvas
+    fillEllipse(px,W,H, 14*s, 19*s, 12*s, 9*s, CREAM);
+    // Thumb hole: punched out of the upper-left of the palette
+    eraseEllipse(px,W,H, 8*s, 14*s, 2.5*s, 2.5*s);
+    // Color blobs arranged along the top edge of the palette
+    fillEllipse(px,W,H, 10*s, 11*s, 2*s, 2*s, RED);
+    fillEllipse(px,W,H, 16*s,  9*s, 2*s, 2*s, ORANGE);
+    fillEllipse(px,W,H, 21*s, 11*s, 2*s, 2*s, GREEN);
+    fillEllipse(px,W,H, 24*s, 17*s, 2*s, 2*s, NAVY);
+    fillEllipse(px,W,H, 22*s, 24*s, 2*s, 2*s, YELLOW);
+    // Brush: handle diagonally from top-right toward the palette
+    const th = Math.max(2, Math.round(s * 2));
+    drawLine(px,W,H, 30*s, 1*s, 22*s, 13*s, BROWN, th);
+    // Ferrule (metal band between handle and bristles)
+    drawLine(px,W,H, 22*s, 13*s, 20*s, 16*s, GRAY, Math.max(3, Math.round(s * 3)));
+    // Bristles: slightly wider, darker tip
+    drawLine(px,W,H, 20*s, 16*s, 17*s, 20*s, DARK, Math.max(3, Math.round(s * 3)));
+}
+
 // ─── Generate icon (64×64) ────────────────────────────────────────────────────
 function makeIcon(renderFn) {
     const W=64,H=64,s=2;
@@ -187,6 +234,8 @@ function makeTile(renderFn) {
     function shiftLine(x0,y0,x1,y1,col,t)  { drawLine(px,W,H,ox+x0,oy+y0,ox+x1,oy+y1,col,t); }
     function shiftSector(cx,cy,r,a1,sp,col) { fillSector(px,W,H,ox+cx,oy+cy,r,a1,sp,col); }
     function shiftArc(cx,cy,ri,ro,a1,sp,col){ drawArc(px,W,H,ox+cx,oy+cy,ri,ro,a1,sp,col); }
+    function shiftEllipse(cx,cy,rx,ry,col)  { fillEllipse(px,W,H,ox+cx,oy+cy,rx,ry,col); }
+    function shiftEraseEllipse(cx,cy,rx,ry) { eraseEllipse(px,W,H,ox+cx,oy+cy,rx,ry); }
 
     if (renderFn === renderBar) {
         shiftFillRect( 1*s, 10*s,  7*s, 31*s, NAVY);
@@ -219,6 +268,18 @@ function makeTile(renderFn) {
         const t=Math.round(s*3);
         shiftLine(cx,cy,nx,ny,RED,t);
         shiftSector(cx,cy,3*s,0,2*Math.PI,RED);
+    } else if (renderFn === renderPalette) {
+        shiftEllipse(14*s, 19*s, 12*s, 9*s, CREAM);
+        shiftEraseEllipse(8*s, 14*s, 2.5*s, 2.5*s);
+        shiftEllipse(10*s, 11*s, 2*s, 2*s, RED);
+        shiftEllipse(16*s,  9*s, 2*s, 2*s, ORANGE);
+        shiftEllipse(21*s, 11*s, 2*s, 2*s, GREEN);
+        shiftEllipse(24*s, 17*s, 2*s, 2*s, NAVY);
+        shiftEllipse(22*s, 24*s, 2*s, 2*s, YELLOW);
+        const th = Math.round(s*2);
+        shiftLine(30*s, 1*s, 22*s, 13*s, BROWN, th);
+        shiftLine(22*s, 13*s, 20*s, 16*s, GRAY, Math.round(s*3));
+        shiftLine(20*s, 16*s, 17*s, 20*s, DARK, Math.round(s*3));
     }
     return makePNG(W,H,px);
 }
@@ -227,10 +288,11 @@ function makeTile(renderFn) {
 const srcDir = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1')), 'src');
 
 const widgets = [
-    { name: 'EChartsBarChart',   render: renderBar   },
-    { name: 'EChartsLineChart',  render: renderLine  },
-    { name: 'EChartsPieChart',   render: renderPie   },
-    { name: 'EChartsGaugeChart', render: renderGauge },
+    { name: 'EChartsBarChart',     render: renderBar     },
+    { name: 'EChartsLineChart',    render: renderLine    },
+    { name: 'EChartsPieChart',     render: renderPie     },
+    { name: 'EChartsGaugeChart',   render: renderGauge   },
+    { name: 'EChartsThemeLoader',  render: renderPalette },
 ];
 
 for (const { name, render } of widgets) {

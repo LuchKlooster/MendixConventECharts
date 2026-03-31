@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <package xmlns="http://www.mendix.com/package/1.0/">
-    <clientModule name="ConventECharts" version="1.1.1" xmlns="http://www.mendix.com/clientModule/1.0/">
+    <clientModule name="ConventECharts" version="1.2.0" xmlns="http://www.mendix.com/clientModule/1.0/">
         <widgetFiles>
             <widgetFile path="EChartsLineChart.xml"/>
             <widgetFile path="EChartsBarChart.xml"/>
             <widgetFile path="EChartsPieChart.xml"/>
             <widgetFile path="EChartsGaugeChart.xml"/>
+            <widgetFile path="EChartsThemeLoader.xml"/>
         </widgetFiles>
         <files>
             <file path="conventsystems/echartslinechart"/>
             <file path="conventsystems/echartsbarchart"/>
             <file path="conventsystems/echartspiechart"/>
             <file path="conventsystems/echartsgaugechart"/>
+            <file path="conventsystems/echartsthemeloader"/>
         </files>
     </clientModule>
 </package>

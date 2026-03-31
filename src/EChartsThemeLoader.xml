@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<widget id="conventsystems.echartsthemeloader.EChartsThemeLoader" offlineCapable="true" pluginWidget="true"
+        xmlns="http://www.mendix.com/widget/1.0/"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd">
+    <name>ECharts Theme Loader</name>
+    <description>Registers an ECharts color theme so all ECharts widgets on the page can use it by name. Place this widget in your layout, before any chart widgets.</description>
+    <studioProCategory>Charts</studioProCategory>
+    <studioCategory>Charts</studioCategory>
+    <properties>
+        <propertyGroup caption="General">
+            <propertyGroup caption="General">
+                <property key="themeName" type="string" required="true">
+                    <caption>Theme name</caption>
+                    <description>The name used to reference this theme in ECharts widgets (the "Theme name" property).</description>
+                </property>
+                <property key="themeJson" type="string" required="true" multiline="true">
+                    <caption>Theme JSON</caption>
+                    <description>ECharts theme as a JSON object. Generate this with the ECharts Theme Builder or the ConventECharts theme extractor tool.</description>
+                </property>
+            </propertyGroup>
+            <propertyGroup caption="Visibility">
+                <systemProperty key="Visibility" />
+            </propertyGroup>
+            <propertyGroup caption="Common">
+                <systemProperty key="Name" />
+                <systemProperty key="TabIndex" />
+            </propertyGroup>
+        </propertyGroup>
+    </properties>
+</widget>

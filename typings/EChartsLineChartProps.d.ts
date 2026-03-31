@@ -91,6 +91,7 @@ export interface EChartsLineChartContainerProps {
     yAxisLabel?: DynamicValue<string>;
     showLegend: boolean;
     legendPosition: LegendPositionEnum;
+    showToolbox: boolean;
     gridLines: GridLinesEnum;
     backgroundColor: string;
     enableTimeline: boolean;
@@ -103,6 +104,7 @@ export interface EChartsLineChartContainerProps {
     width: number;
     heightUnit: HeightUnitEnum;
     height: number;
+    themeName: string;
     customLayout: string;
     customConfigurations: string;
 }
@@ -125,6 +127,7 @@ export interface EChartsLineChartPreviewProps {
     yAxisLabel: string;
     showLegend: boolean;
     legendPosition: LegendPositionEnum;
+    showToolbox: boolean;
     gridLines: GridLinesEnum;
     backgroundColor: string;
     enableTimeline: boolean;
@@ -137,6 +140,7 @@ export interface EChartsLineChartPreviewProps {
     width: number | null;
     heightUnit: HeightUnitEnum;
     height: number | null;
+    themeName: string;
     customLayout: string;
     customConfigurations: string;
 }

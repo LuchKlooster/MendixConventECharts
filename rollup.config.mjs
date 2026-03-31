@@ -449,12 +449,116 @@ export default async args => {
         ]
     });
 
-    // ── Gauge chart editor config (last bundle – also exits the process) ──────
+    // ── Gauge chart editor config ─────────────────────────────────────────────
     gaugeChartConfigs.push({
         input: join(sourcePath, "src/EChartsGaugeChart.editorConfig.ts"),
         output: {
             format: "commonjs",
             file: join(outDir, "EChartsGaugeChart.editorConfig.js"),
+            sourcemap: false
+        },
+        external: commonExternalLibs,
+        strictDeprecations: true,
+        treeshake: { moduleSideEffects: false },
+        plugins: [
+            ...getCommonPlugins({
+                sourceMaps: false,
+                transpile: true,
+                babelConfig: { presets: [["@babel/preset-env", { targets: { ie: "11" } }]] },
+                external: commonExternalLibs
+            }),
+            command([
+                async () =>
+                    createMpkFile({
+                        mpkDir,
+                        mpkFile,
+                        widgetTmpDir: outDir,
+                        isProduction: production,
+                        mxProjectPath: undefined,
+                        deploymentPath: "deployment/web/widgets"
+                    })
+            ])
+        ]
+    });
+
+    // ── Theme loader output paths ─────────────────────────────────────────────
+    const outThemeDir = "conventsystems/echartsthemeloader";
+    const outThemeFile = join(outThemeDir, "EChartsThemeLoader");
+
+    const themeLoaderConfigs = [];
+
+    // ── Theme loader widget bundles (AMD + ES) ────────────────────────────────
+    ["amd", "es"].forEach(outputFormat => {
+        themeLoaderConfigs.push({
+            input: join(sourcePath, "src/EChartsThemeLoader.tsx"),
+            output: {
+                format: outputFormat,
+                file: join(outDir, `${outThemeFile}.${outputFormat === "es" ? "mjs" : "js"}`),
+                sourcemap: !production ? "inline" : false
+            },
+            external: webExternal,
+            plugins: [
+                alias({ entries: { "react-hot-loader/root": hotEntry } }),
+                ...getCommonPlugins({
+                    sourceMaps: !production,
+                    transpile: production,
+                    babelConfig: {
+                        presets: [["@babel/preset-env", { targets: { safari: "12" } }]],
+                        allowAllFormats: true
+                    },
+                    external: outputFormat === "es" ? [] : webExternal
+                }),
+                command([
+                    async () =>
+                        createMpkFile({
+                            mpkDir,
+                            mpkFile,
+                            widgetTmpDir: outDir,
+                            isProduction: production,
+                            mxProjectPath: undefined,
+                            deploymentPath: "deployment/web/widgets"
+                        })
+                ])
+            ]
+        });
+    });
+
+    // ── Theme loader editor preview ───────────────────────────────────────────
+    themeLoaderConfigs.push({
+        input: join(sourcePath, "src/EChartsThemeLoader.editorPreview.tsx"),
+        output: {
+            format: "commonjs",
+            file: join(outDir, "EChartsThemeLoader.editorPreview.js"),
+            sourcemap: !production ? "inline" : false
+        },
+        external: commonExternalLibs,
+        plugins: [
+            ...getCommonPlugins({
+                sourceMaps: !production,
+                transpile: production,
+                babelConfig: { presets: [["@babel/preset-env", { targets: { safari: "12" } }]] },
+                external: commonExternalLibs
+            }),
+            command([
+                async () =>
+                    createMpkFile({
+                        mpkDir,
+                        mpkFile,
+                        widgetTmpDir: outDir,
+                        isProduction: production,
+                        mxProjectPath: undefined,
+                        deploymentPath: "deployment/web/widgets"
+                    })
+            ])
+        ]
+    });
+
+    // ── Theme loader editor config (last bundle – copies assets and exits) ────
+    themeLoaderConfigs.push({
+        input: join(sourcePath, "src/EChartsThemeLoader.editorConfig.ts"),
+        output: {
+            format: "commonjs",
+            file: join(outDir, "EChartsThemeLoader.editorConfig.js"),
             sourcemap: false
         },
         external: commonExternalLibs,
@@ -475,14 +579,21 @@ export default async args => {
                         "EChartsLineChart.xml",
                         "EChartsBarChart.xml",
                         "EChartsPieChart.xml",
-                        "EChartsGaugeChart.xml"
+                        "EChartsGaugeChart.xml",
+                        "EChartsThemeLoader.xml"
                     ];
                     for (const f of xmlFiles) {
                         const src = join(sourcePath, "src", f);
                         if (existsSync(src)) copyFileSync(src, join(outDir, f));
                     }
-                    // Copy icon / tile PNGs for all four widgets
-                    const widgetNames = ["EChartsLineChart", "EChartsBarChart", "EChartsPieChart", "EChartsGaugeChart"];
+                    // Copy icon / tile PNGs for all widgets
+                    const widgetNames = [
+                        "EChartsLineChart",
+                        "EChartsBarChart",
+                        "EChartsPieChart",
+                        "EChartsGaugeChart",
+                        "EChartsThemeLoader"
+                    ];
                     const pngSuffixes = ["icon.png", "icon.dark.png", "tile.png", "tile.dark.png"];
                     for (const name of widgetNames) {
                         for (const suffix of pngSuffixes) {
@@ -512,5 +623,5 @@ export default async args => {
         ]
     });
 
-    return [...defaultConfigs, ...barChartConfigs, ...pieChartConfigs, ...gaugeChartConfigs];
+    return [...defaultConfigs, ...barChartConfigs, ...pieChartConfigs, ...gaugeChartConfigs, ...themeLoaderConfigs];
 };

@@ -11,6 +11,7 @@ export function EChartsLineChart(props: EChartsLineChartContainerProps): ReactEl
         yAxisLabel,
         showLegend,
         legendPosition,
+        showToolbox,
         gridLines,
         xAxisDateFormat,
         backgroundColor,
@@ -24,6 +25,7 @@ export function EChartsLineChart(props: EChartsLineChartContainerProps): ReactEl
         width,
         heightUnit,
         height,
+        themeName,
         customLayout,
         customConfigurations,
         class: className,
@@ -63,6 +65,7 @@ export function EChartsLineChart(props: EChartsLineChartContainerProps): ReactEl
                 yAxisLabel={yAxisLabel?.value ?? ""}
                 showLegend={showLegend}
                 legendPosition={legendPosition}
+                showToolbox={showToolbox}
                 gridLines={gridLines}
                 xAxisDateFormat={xAxisDateFormat || undefined}
                 backgroundColor={backgroundColor || undefined}
@@ -73,6 +76,7 @@ export function EChartsLineChart(props: EChartsLineChartContainerProps): ReactEl
                     rewind: timelineRewind,
                     dateFormat: timelineDateFormat || undefined
                 } : undefined}
+                themeName={themeName || undefined}
                 customOption={customLayout || undefined}
                 customInitOptions={customConfigurations || undefined}
                 onDataPointClick={onDataPointClick}

@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useRef, useCallback } from "react";
+import { ReactElement, useEffect, useRef, useCallback, useState } from "react";
 import * as echarts from "echarts/core";
 import { LineChart as EChartsLineChart } from "echarts/charts";
 import {
@@ -31,10 +31,12 @@ export interface LineChartProps {
     yAxisLabel: string;
     showLegend: boolean;
     legendPosition: "top" | "bottom" | "left" | "right";
+    showToolbox: boolean;
     gridLines: GridLinesEnum;
     xAxisDateFormat?: string;
     backgroundColor?: string;
     timelineConfig?: TimelineConfig;
+    themeName?: string;
     customOption?: string;
     customInitOptions?: string;
     onDataPointClick?: (seriesIndex: number, dataIndex: number) => void;
@@ -50,6 +52,10 @@ function deepMerge<T extends object>(target: T, source: Partial<T>): T {
         if (srcVal && typeof srcVal === "object" && !Array.isArray(srcVal) &&
             tgtVal && typeof tgtVal === "object" && !Array.isArray(tgtVal)) {
             result[key] = deepMerge(tgtVal as object, srcVal as object);
+        } else if (Array.isArray(srcVal) && srcVal.length === 1 && srcVal[0] && typeof srcVal[0] === "object" &&
+                   tgtVal && typeof tgtVal === "object" && !Array.isArray(tgtVal)) {
+            // Custom provides a single-element array but base has a plain object — merge the element in
+            result[key] = deepMerge(tgtVal as object, srcVal[0] as object);
         } else if (srcVal !== undefined) {
             result[key] = srcVal;
         }
@@ -67,7 +73,7 @@ function buildLegend(show: boolean, position: string) {
 }
 
 function buildEChartsOption(props: LineChartProps): EChartsOption {
-    const { series, xAxisLabel, yAxisLabel, showLegend, legendPosition, gridLines, xAxisDateFormat, backgroundColor } = props;
+    const { series, xAxisLabel, yAxisLabel, showLegend, legendPosition, showToolbox, gridLines, xAxisDateFormat, backgroundColor } = props;
 
     const xIsDateTime = series.some(s => s.xIsDateTime);
 
@@ -149,7 +155,7 @@ function buildEChartsOption(props: LineChartProps): EChartsOption {
         : undefined;
 
     const option: EChartsOption = {
-        backgroundColor: backgroundColor || "transparent",
+        ...(backgroundColor ? { backgroundColor } : {}),
         tooltip: {
             trigger: "axis",
             axisPointer: {
@@ -170,6 +176,7 @@ function buildEChartsOption(props: LineChartProps): EChartsOption {
             formatter: chartTooltipFormatter as EChartsOption["tooltip"] extends { formatter?: infer F } ? F : never
         },
         legend: buildLegend(showLegend, legendPosition),
+        toolbox: showToolbox ? { feature: { dataView: { show: true, readOnly: false }, restore: { show: true }, saveAsImage: { show: true } } } : undefined,
         grid: {
             left: legendPosition === "left" ? "20%" : "3%",
             right: legendPosition === "right" ? "20%" : "4%",
@@ -202,7 +209,17 @@ function buildEChartsOption(props: LineChartProps): EChartsOption {
     if (props.customOption) {
         try {
             const custom = JSON.parse(props.customOption);
-            return deepMerge(option, custom);
+            const merged = deepMerge(option, custom);
+            // Increase grid.bottom when xAxis labels are rotated so they don't overlap the dataZoom / container edge
+            const xAxisOption = merged.xAxis as { axisLabel?: { rotate?: number } } | undefined;
+            const rotate = xAxisOption?.axisLabel?.rotate;
+            if (rotate && Math.abs(rotate) > 0) {
+                const grid = merged.grid as { bottom?: number | string } | undefined;
+                if (grid && typeof grid.bottom === "number") {
+                    grid.bottom = Math.max(grid.bottom, Math.round(Math.abs(rotate) * 1.5) + 20);
+                }
+            }
+            return merged;
         } catch {
             console.warn("[EChartsLineChart] Invalid customOption JSON");
         }
@@ -211,12 +228,27 @@ function buildEChartsOption(props: LineChartProps): EChartsOption {
     return option;
 }
 
+const REGISTRY_KEY = "__echartsThemeRegistry";
+const EVENT_NAME = "echarts-theme-registered";
+
+/** Register all themes from the global registry on this bundle's ECharts instance. */
+function applyThemeRegistry(): void {
+    const registry = (window as any)[REGISTRY_KEY] as Record<string, object> | undefined;
+    if (!registry) return;
+    for (const [name, theme] of Object.entries(registry)) {
+        echarts.registerTheme(name, theme);
+    }
+}
+
 export function LineChart(props: LineChartProps): ReactElement {
     const containerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<echarts.ECharts | null>(null);
+    const [reInitKey, setReInitKey] = useState(0);
 
     const initChart = useCallback(() => {
         if (!containerRef.current) return;
+
+        applyThemeRegistry();
 
         let initOpts: object = {};
         if (props.customInitOptions) {
@@ -227,20 +259,32 @@ export function LineChart(props: LineChartProps): ReactElement {
             }
         }
 
-        chartRef.current = echarts.init(containerRef.current, undefined, {
+        chartRef.current = echarts.init(containerRef.current, props.themeName || undefined, {
             renderer: "canvas",
             ...initOpts
         });
-    }, [props.customInitOptions]);
+        chartRef.current.resize();
+    }, [props.customInitOptions, props.themeName]);
 
-    // Initialize chart on mount
+    // Initialize (or reinitialize) whenever reInitKey changes
     useEffect(() => {
         initChart();
         return () => {
             chartRef.current?.dispose();
             chartRef.current = null;
         };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [reInitKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Reinitialize when the Theme Loader registers a matching theme at runtime
+    useEffect(() => {
+        if (!props.themeName) return;
+        const handler = (e: Event) => {
+            const { themeName } = (e as CustomEvent<{ themeName: string }>).detail ?? {};
+            if (themeName === props.themeName) setReInitKey(k => k + 1);
+        };
+        window.addEventListener(EVENT_NAME, handler);
+        return () => window.removeEventListener(EVENT_NAME, handler);
+    }, [props.themeName]);
 
     // Update chart option whenever data or config changes
     useEffect(() => {

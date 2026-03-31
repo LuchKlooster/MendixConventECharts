@@ -21,6 +21,7 @@ interface EChartsBarChartContainerProps {
     valueAxisLabel?: { value?: string };
     showLegend: boolean;
     legendPosition: "top" | "bottom" | "left" | "right";
+    showToolbox: boolean;
     gridLines: "none" | "horizontal" | "vertical" | "both";
     enableTimeline: boolean;
     timelineDateFormat: string;
@@ -32,6 +33,7 @@ interface EChartsBarChartContainerProps {
     width: number;
     heightUnit: "percentageOfWidth" | "pixels" | "percentageOfParent";
     height: number;
+    themeName: string;
     customLayout: string;
     customConfigurations: string;
 }
@@ -48,6 +50,7 @@ export function EChartsBarChart(props: EChartsBarChartContainerProps): ReactElem
         valueAxisLabel,
         showLegend,
         legendPosition,
+        showToolbox,
         gridLines,
         enableTimeline,
         timelineDateFormat,
@@ -59,6 +62,7 @@ export function EChartsBarChart(props: EChartsBarChartContainerProps): ReactElem
         width,
         heightUnit,
         height,
+        themeName,
         customLayout,
         customConfigurations,
         class: className,
@@ -110,6 +114,7 @@ export function EChartsBarChart(props: EChartsBarChartContainerProps): ReactElem
                 valueAxisLabel={valueAxisLabel?.value ?? ""}
                 showLegend={showLegend}
                 legendPosition={legendPosition}
+                showToolbox={showToolbox}
                 gridLines={gridLines}
                 horizontal={horizontal}
                 stack={stack}
@@ -121,6 +126,7 @@ export function EChartsBarChart(props: EChartsBarChartContainerProps): ReactElem
                     rewind: timelineRewind,
                     dateFormat: timelineDateFormat || undefined
                 } : undefined}
+                themeName={themeName || undefined}
                 customOption={customLayout || undefined}
                 customInitOptions={customConfigurations || undefined}
                 onDataPointClick={onDataPointClick}

@@ -252,6 +252,10 @@
                         <enumerationValue key="right">Right</enumerationValue>
                     </enumerationValues>
                 </property>
+                <property key="showToolbox" type="boolean" defaultValue="false">
+                    <caption>Show toolbox</caption>
+                    <description>Shows the default toolbox (data view, restore, save as image). For a custom toolbox use the Custom chart option field, e.g.: {"toolbox":{"feature":{"magicType":{"show":true,"type":["line","bar"]}}}}</description>
+                </property>
                 <property key="gridLines" type="enumeration" defaultValue="none">
                     <caption>Grid lines</caption>
                     <description />
@@ -332,6 +336,10 @@
         </propertyGroup>
         <propertyGroup caption="Advanced">
             <propertyGroup caption="Advanced">
+                <property key="themeName" type="string" required="false">
+                    <caption>Theme name</caption>
+                    <description>Name of an ECharts theme registered via echarts.registerTheme(). Leave empty to use the ECharts default.</description>
+                </property>
                 <property key="customLayout" type="string" required="false" multiline="true">
                     <caption>Custom chart option</caption>
                     <description>JSON object deep-merged into the ECharts option. Use this to override any chart configuration.</description>

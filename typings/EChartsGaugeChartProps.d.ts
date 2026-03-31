@@ -47,11 +47,13 @@ export interface EChartsGaugeChartContainerProps {
     colorRanges: string;
     showLegend: boolean;
     legendPosition: LegendPositionEnum;
+    showToolbox: boolean;
     backgroundColor: string;
     widthUnit: WidthUnitEnum;
     width: number;
     heightUnit: HeightUnitEnum;
     height: number;
+    themeName: string;
     customLayout: string;
     customConfigurations: string;
 }
@@ -96,11 +98,13 @@ export interface EChartsGaugeChartPreviewProps {
     colorRanges: string;
     showLegend: boolean;
     legendPosition: LegendPositionEnum;
+    showToolbox: boolean;
     backgroundColor: string;
     widthUnit: WidthUnitEnum;
     width: number | null;
     heightUnit: HeightUnitEnum;
     height: number | null;
+    themeName: string;
     customLayout: string;
     customConfigurations: string;
 }

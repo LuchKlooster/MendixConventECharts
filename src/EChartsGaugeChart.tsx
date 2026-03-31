@@ -50,11 +50,13 @@ interface EChartsGaugeChartContainerProps {
     colorRanges: string;
     showLegend: boolean;
     legendPosition: "top" | "bottom" | "left" | "right";
+    showToolbox: boolean;
     backgroundColor: string;
     widthUnit: "percentage" | "pixels";
     width: number;
     heightUnit: "percentageOfWidth" | "pixels" | "percentageOfParent";
     height: number;
+    themeName: string;
     customLayout: string;
     customConfigurations: string;
 }
@@ -79,9 +81,9 @@ export function EChartsGaugeChart(props: EChartsGaugeChartContainerProps): React
         valueAttribute2, labelAttribute2, series2Min, series2Max, series2CustomOptions,
         valueAttribute3, labelAttribute3, series3Min, series3Max, series3CustomOptions,
         min, max, units, startAngle, endAngle, splitNumber,
-        showProgress, colorRanges, showLegend, legendPosition, backgroundColor,
+        showProgress, colorRanges, showLegend, legendPosition, showToolbox, backgroundColor,
         widthUnit, width, heightUnit, height,
-        customLayout, customConfigurations,
+        themeName, customLayout, customConfigurations,
         class: className, style
     } = props;
 
@@ -142,7 +144,9 @@ export function EChartsGaugeChart(props: EChartsGaugeChartContainerProps): React
                 colorRanges={colorRanges || undefined}
                 showLegend={showLegend}
                 legendPosition={legendPosition}
+                showToolbox={showToolbox}
                 backgroundColor={backgroundColor || undefined}
+                themeName={themeName || undefined}
                 customOption={customLayout || undefined}
                 customInitOptions={customConfigurations || undefined}
             />

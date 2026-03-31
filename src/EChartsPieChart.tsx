@@ -16,12 +16,14 @@ interface EChartsPieChartContainerProps {
     roseType: boolean;
     showLegend: boolean;
     legendPosition: "top" | "bottom" | "left" | "right";
+    showToolbox: boolean;
     backgroundColor: string;
     enableAdvancedOptions: boolean;
     widthUnit: "percentage" | "pixels";
     width: number;
     heightUnit: "percentageOfWidth" | "pixels" | "percentageOfParent";
     height: number;
+    themeName: string;
     customLayout: string;
     customConfigurations: string;
 }
@@ -60,7 +62,8 @@ function buildStaticPieSeries(s: any): BuiltPieSeries {
                 tooltip: p.tooltip ?? "",
                 onClickItem: firstItem
             };
-        })
+        }),
+        customSeriesOptions: s.customSeriesOptions || undefined
     };
 }
 
@@ -107,7 +110,8 @@ function buildDynamicPieSeries(s: any): BuiltPieSeries[] {
                     tooltip: p.tooltip ?? "",
                     onClickItem: firstItem
                 };
-            })
+            }),
+            customSeriesOptions: s.customSeriesOptions || undefined
         };
     });
 }
@@ -121,11 +125,13 @@ export function EChartsPieChart(props: EChartsPieChartContainerProps): ReactElem
         roseType,
         showLegend,
         legendPosition,
+        showToolbox,
         backgroundColor,
         widthUnit,
         width,
         heightUnit,
         height,
+        themeName,
         customLayout,
         customConfigurations,
         class: className,
@@ -169,7 +175,9 @@ export function EChartsPieChart(props: EChartsPieChartContainerProps): ReactElem
                 roseType={roseType}
                 showLegend={showLegend}
                 legendPosition={legendPosition}
+                showToolbox={showToolbox}
                 backgroundColor={backgroundColor || undefined}
+                themeName={themeName || undefined}
                 customOption={customLayout || undefined}
                 customInitOptions={customConfigurations || undefined}
                 onDataPointClick={onDataPointClick}

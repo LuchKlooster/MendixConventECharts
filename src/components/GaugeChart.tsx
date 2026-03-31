@@ -1,11 +1,22 @@
-import { ReactElement, useEffect, useRef } from "react";
+import { ReactElement, useEffect, useRef, useState } from "react";
 import * as echarts from "echarts/core";
 import { GaugeChart as EChartsGaugeChart } from "echarts/charts";
-import { TooltipComponent, LegendComponent, TitleComponent } from "echarts/components";
+import { TooltipComponent, LegendComponent, TitleComponent, ToolboxComponent } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import type { EChartsOption, GaugeSeriesOption } from "echarts";
 
-echarts.use([EChartsGaugeChart, TooltipComponent, LegendComponent, TitleComponent, CanvasRenderer]);
+echarts.use([EChartsGaugeChart, TooltipComponent, LegendComponent, TitleComponent, ToolboxComponent, CanvasRenderer]);
+
+const REGISTRY_KEY = "__echartsThemeRegistry";
+const EVENT_NAME = "echarts-theme-registered";
+
+function applyThemeRegistry(): void {
+    const registry = (window as any)[REGISTRY_KEY] as Record<string, object> | undefined;
+    if (!registry) return;
+    for (const [name, theme] of Object.entries(registry)) {
+        echarts.registerTheme(name, theme);
+    }
+}
 
 export interface GaugePointer {
     name: string;
@@ -35,7 +46,9 @@ export interface GaugeChartProps {
     colorRanges?: string;
     showLegend: boolean;
     legendPosition: "top" | "bottom" | "left" | "right";
+    showToolbox: boolean;
     backgroundColor?: string;
+    themeName?: string;
     customOption?: string;
     customInitOptions?: string;
     onDataPointClick?: (dataIndex: number) => void;
@@ -49,6 +62,9 @@ function deepMerge<T extends object>(target: T, source: Partial<T>): T {
         if (srcVal && typeof srcVal === "object" && !Array.isArray(srcVal) &&
             tgtVal && typeof tgtVal === "object" && !Array.isArray(tgtVal)) {
             result[key] = deepMerge(tgtVal as object, srcVal as object);
+        } else if (Array.isArray(srcVal) && srcVal.length === 1 && srcVal[0] && typeof srcVal[0] === "object" &&
+                   tgtVal && typeof tgtVal === "object" && !Array.isArray(tgtVal)) {
+            result[key] = deepMerge(tgtVal as object, srcVal[0] as object);
         } else if (srcVal !== undefined) {
             result[key] = srcVal;
         }
@@ -139,7 +155,7 @@ function resolveFormatters(series: GaugeSeriesOption): GaugeSeriesOption {
 function buildEChartsOption(props: GaugeChartProps): EChartsOption {
     const {
         pointers, seriesList, min, max, units, startAngle, endAngle, splitNumber,
-        showProgress, colorRanges, showLegend, legendPosition, backgroundColor
+        showProgress, colorRanges, showLegend, legendPosition, showToolbox, backgroundColor
     } = props;
 
     const colors = parseColorRanges(colorRanges);
@@ -187,8 +203,9 @@ function buildEChartsOption(props: GaugeChartProps): EChartsOption {
     }
 
     const option: EChartsOption = {
-        backgroundColor: backgroundColor || "transparent",
+        ...(backgroundColor ? { backgroundColor } : {}),
         legend: buildLegend(showLegend, legendPosition),
+        toolbox: showToolbox ? { feature: { dataView: { show: true, readOnly: false }, restore: { show: true }, saveAsImage: { show: true } } } : undefined,
         tooltip: { trigger: "item" },
         series: seriesArray
     };
@@ -208,23 +225,39 @@ export function GaugeChart(props: GaugeChartProps): ReactElement {
     const containerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<echarts.ECharts | null>(null);
     const propsRef = useRef(props);
+    const [reInitKey, setReInitKey] = useState(0);
 
-    // Initialize
+    // Keep propsRef current on every render (no side effects)
+    propsRef.current = props;
+
+    // Initialize (or reinitialize) whenever reInitKey changes
     useEffect(() => {
         if (!containerRef.current) return;
+        applyThemeRegistry();
         let initOpts: object = {};
-        if (props.customInitOptions) {
-            try { initOpts = JSON.parse(props.customInitOptions); } catch { /* ignore */ }
+        if (propsRef.current.customInitOptions) {
+            try { initOpts = JSON.parse(propsRef.current.customInitOptions); } catch { /* ignore */ }
         }
-        chartRef.current = echarts.init(containerRef.current, undefined, { renderer: "canvas", ...initOpts });
+        chartRef.current = echarts.init(containerRef.current, propsRef.current.themeName || undefined, { renderer: "canvas", ...initOpts });
+        chartRef.current.resize();
+        // Apply current option immediately so the chart is not blank after reinit
+        chartRef.current.setOption(buildEChartsOption(propsRef.current) as EChartsOption, { notMerge: true });
         return () => {
             chartRef.current?.dispose();
             chartRef.current = null;
         };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [reInitKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Keep propsRef current on every render (no side effects)
-    propsRef.current = props;
+    // Reinitialize when the Theme Loader registers a matching theme at runtime
+    useEffect(() => {
+        if (!props.themeName) return;
+        const handler = (e: Event) => {
+            const { themeName } = (e as CustomEvent<{ themeName: string }>).detail ?? {};
+            if (themeName === props.themeName) setReInitKey(k => k + 1);
+        };
+        window.addEventListener(EVENT_NAME, handler);
+        return () => window.removeEventListener(EVENT_NAME, handler);
+    }, [props.themeName]);
 
     // Serialize data to a stable string so setOption is only called when values actually change
     const optionKey = JSON.stringify(

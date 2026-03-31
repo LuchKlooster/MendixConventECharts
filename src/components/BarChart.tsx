@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useRef } from "react";
+import { ReactElement, useEffect, useRef, useState } from "react";
 import * as echarts from "echarts/core";
 import { BarChart as EChartsBarChart } from "echarts/charts";
 import {
@@ -31,6 +31,7 @@ export interface BarChartProps {
     valueAxisLabel: string;
     showLegend: boolean;
     legendPosition: "top" | "bottom" | "left" | "right";
+    showToolbox: boolean;
     gridLines: "none" | "horizontal" | "vertical" | "both";
     horizontal: boolean;
     stack: boolean;
@@ -38,6 +39,7 @@ export interface BarChartProps {
     xAxisDateFormat?: string;
     backgroundColor?: string;
     timelineConfig?: TimelineConfig;
+    themeName?: string;
     customOption?: string;
     customInitOptions?: string;
     onDataPointClick?: (seriesIndex: number, dataIndex: number) => void;
@@ -51,6 +53,9 @@ function deepMerge<T extends object>(target: T, source: Partial<T>): T {
         if (srcVal && typeof srcVal === "object" && !Array.isArray(srcVal) &&
             tgtVal && typeof tgtVal === "object" && !Array.isArray(tgtVal)) {
             result[key] = deepMerge(tgtVal as object, srcVal as object);
+        } else if (Array.isArray(srcVal) && srcVal.length === 1 && srcVal[0] && typeof srcVal[0] === "object" &&
+                   tgtVal && typeof tgtVal === "object" && !Array.isArray(tgtVal)) {
+            result[key] = deepMerge(tgtVal as object, srcVal[0] as object);
         } else if (srcVal !== undefined) {
             result[key] = srcVal;
         }
@@ -134,7 +139,7 @@ function buildLegend(show: boolean, position: string) {
 }
 
 function buildEChartsOption(props: BarChartProps): EChartsOption {
-    const { series, categoryAxisLabel, valueAxisLabel, showLegend, legendPosition, gridLines, horizontal, stack, barWidth, xAxisDateFormat, backgroundColor } = props;
+    const { series, categoryAxisLabel, valueAxisLabel, showLegend, legendPosition, showToolbox, gridLines, horizontal, stack, barWidth, xAxisDateFormat, backgroundColor } = props;
 
     const xIsDateTime = series.some(s => s.xIsDateTime);
     const categories = collectCategories(series, xAxisDateFormat);
@@ -228,9 +233,10 @@ function buildEChartsOption(props: BarChartProps): EChartsOption {
 
     const option: EChartsOption = horizontal
         ? {
-              backgroundColor: backgroundColor || "transparent",
+              ...(backgroundColor ? { backgroundColor } : {}),
               tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
               legend: buildLegend(showLegend, legendPosition),
+              toolbox: showToolbox ? { feature: { dataView: { show: true, readOnly: false }, restore: { show: true }, saveAsImage: { show: true } } } : undefined,
               grid: { left: legendPosition === "left" ? "20%" : "3%", right: legendPosition === "right" ? "20%" : "4%", bottom: categoryAxisLabel ? 60 : 30, containLabel: true },
               xAxis: {
                   type: "value",
@@ -251,9 +257,10 @@ function buildEChartsOption(props: BarChartProps): EChartsOption {
               series: eChartsSeries
           }
         : {
-              backgroundColor: backgroundColor || "transparent",
+              ...(backgroundColor ? { backgroundColor } : {}),
               tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
               legend: buildLegend(showLegend, legendPosition),
+              toolbox: showToolbox ? { feature: { dataView: { show: true, readOnly: false }, restore: { show: true }, saveAsImage: { show: true } } } : undefined,
               grid: { left: legendPosition === "left" ? "20%" : "3%", right: legendPosition === "right" ? "20%" : "4%", bottom: categoryAxisLabel ? 60 : 30, containLabel: true },
               xAxis: {
                   type: "category",
@@ -280,13 +287,33 @@ function buildEChartsOption(props: BarChartProps): EChartsOption {
 
     if (props.customOption) {
         try {
-            return deepMerge(option, JSON.parse(props.customOption));
+            const merged = deepMerge(option, JSON.parse(props.customOption));
+            const xAxisOption = merged.xAxis as { axisLabel?: { rotate?: number } } | undefined;
+            const rotate = xAxisOption?.axisLabel?.rotate;
+            if (rotate && Math.abs(rotate) > 0) {
+                const grid = merged.grid as { bottom?: number | string } | undefined;
+                if (grid && typeof grid.bottom === "number") {
+                    grid.bottom = Math.max(grid.bottom, Math.round(Math.abs(rotate) * 1.5) + 20);
+                }
+            }
+            return merged;
         } catch {
             console.warn("[EChartsBarChart] Invalid customOption JSON");
         }
     }
 
     return option;
+}
+
+const REGISTRY_KEY = "__echartsThemeRegistry";
+const EVENT_NAME = "echarts-theme-registered";
+
+function applyThemeRegistry(): void {
+    const registry = (window as any)[REGISTRY_KEY] as Record<string, object> | undefined;
+    if (!registry) return;
+    for (const [name, theme] of Object.entries(registry)) {
+        echarts.registerTheme(name, theme);
+    }
 }
 
 export function BarChart(props: BarChartProps): ReactElement {
@@ -296,20 +323,34 @@ export function BarChart(props: BarChartProps): ReactElement {
     // Kept in a ref so the click handler always sees the latest mapping without
     // needing to be re-registered on every render.
     const posToOrigRef = useRef<Map<number, number>[]>([]);
+    const [reInitKey, setReInitKey] = useState(0);
 
-    // Initialize chart on mount
+    // Initialize (or reinitialize) whenever reInitKey changes
     useEffect(() => {
         if (!containerRef.current) return;
+        applyThemeRegistry();
         let initOpts: object = {};
         if (props.customInitOptions) {
             try { initOpts = JSON.parse(props.customInitOptions); } catch { /* ignore */ }
         }
-        chartRef.current = echarts.init(containerRef.current, undefined, { renderer: "canvas", ...initOpts });
+        chartRef.current = echarts.init(containerRef.current, props.themeName || undefined, { renderer: "canvas", ...initOpts });
+        chartRef.current.resize();
         return () => {
             chartRef.current?.dispose();
             chartRef.current = null;
         };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [reInitKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Reinitialize when the Theme Loader registers a matching theme at runtime
+    useEffect(() => {
+        if (!props.themeName) return;
+        const handler = (e: Event) => {
+            const { themeName } = (e as CustomEvent<{ themeName: string }>).detail ?? {};
+            if (themeName === props.themeName) setReInitKey(k => k + 1);
+        };
+        window.addEventListener(EVENT_NAME, handler);
+        return () => window.removeEventListener(EVENT_NAME, handler);
+    }, [props.themeName]);
 
     // Update option on every render
     useEffect(() => {

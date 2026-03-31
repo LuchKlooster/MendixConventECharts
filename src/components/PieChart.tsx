@@ -1,12 +1,23 @@
-import { ReactElement, useEffect, useRef } from "react";
+import { ReactElement, useEffect, useRef, useState } from "react";
 import * as echarts from "echarts/core";
 import { PieChart as EChartsPieChart } from "echarts/charts";
-import { TooltipComponent, LegendComponent, TitleComponent } from "echarts/components";
+import { TooltipComponent, LegendComponent, TitleComponent, ToolboxComponent } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import type { EChartsOption, PieSeriesOption } from "echarts";
 import { ObjectItem } from "mendix";
 
-echarts.use([EChartsPieChart, TooltipComponent, LegendComponent, TitleComponent, CanvasRenderer]);
+echarts.use([EChartsPieChart, TooltipComponent, LegendComponent, TitleComponent, ToolboxComponent, CanvasRenderer]);
+
+const REGISTRY_KEY = "__echartsThemeRegistry";
+const EVENT_NAME = "echarts-theme-registered";
+
+function applyThemeRegistry(): void {
+    const registry = (window as any)[REGISTRY_KEY] as Record<string, object> | undefined;
+    if (!registry) return;
+    for (const [name, theme] of Object.entries(registry)) {
+        echarts.registerTheme(name, theme);
+    }
+}
 
 export interface PieSlice {
     name: string;
@@ -19,6 +30,7 @@ export interface PieSlice {
 export interface BuiltPieSeries {
     name: string;
     slices: PieSlice[];
+    customSeriesOptions?: string;
 }
 
 export interface PieChartProps {
@@ -29,7 +41,9 @@ export interface PieChartProps {
     roseType: boolean;
     showLegend: boolean;
     legendPosition: "top" | "bottom" | "left" | "right";
+    showToolbox: boolean;
     backgroundColor?: string;
+    themeName?: string;
     customOption?: string;
     customInitOptions?: string;
     onDataPointClick?: (seriesIndex: number, sliceIndex: number) => void;
@@ -43,6 +57,9 @@ function deepMerge<T extends object>(target: T, source: Partial<T>): T {
         if (srcVal && typeof srcVal === "object" && !Array.isArray(srcVal) &&
             tgtVal && typeof tgtVal === "object" && !Array.isArray(tgtVal)) {
             result[key] = deepMerge(tgtVal as object, srcVal as object);
+        } else if (Array.isArray(srcVal) && srcVal.length === 1 && srcVal[0] && typeof srcVal[0] === "object" &&
+                   tgtVal && typeof tgtVal === "object" && !Array.isArray(tgtVal)) {
+            result[key] = deepMerge(tgtVal as object, srcVal[0] as object);
         } else if (srcVal !== undefined) {
             result[key] = srcVal;
         }
@@ -87,7 +104,7 @@ function buildLegend(show: boolean, position: string) {
 }
 
 function buildEChartsOption(props: PieChartProps): EChartsOption {
-    const { series, donut, innerRadius, outerRadius, roseType, showLegend, legendPosition, backgroundColor } = props;
+    const { series, donut, innerRadius, outerRadius, roseType, showLegend, legendPosition, showToolbox, backgroundColor } = props;
 
     const eChartsSeries: PieSeriesOption[] = series.map((s, i) => {
         const hasCustomTooltips = s.slices.some(sl => sl.tooltip);
@@ -113,13 +130,22 @@ function buildEChartsOption(props: PieChartProps): EChartsOption {
             }
         };
 
+        if (s.customSeriesOptions) {
+            try {
+                return { ...baseSeries, ...JSON.parse(s.customSeriesOptions) };
+            } catch {
+                console.warn("[EChartsPieChart] Invalid customSeriesOptions JSON for series:", s.name);
+            }
+        }
+
         return baseSeries;
     });
 
     const option: EChartsOption = {
-        backgroundColor: backgroundColor || "transparent",
+        ...(backgroundColor ? { backgroundColor } : {}),
         tooltip: { trigger: "item" },
         legend: buildLegend(showLegend, legendPosition),
+        toolbox: showToolbox ? { feature: { dataView: { show: true, readOnly: false }, restore: { show: true }, saveAsImage: { show: true } } } : undefined,
         series: eChartsSeries
     };
 
@@ -137,20 +163,34 @@ function buildEChartsOption(props: PieChartProps): EChartsOption {
 export function PieChart(props: PieChartProps): ReactElement {
     const containerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<echarts.ECharts | null>(null);
+    const [reInitKey, setReInitKey] = useState(0);
 
-    // Initialize
+    // Initialize (or reinitialize) whenever reInitKey changes
     useEffect(() => {
         if (!containerRef.current) return;
+        applyThemeRegistry();
         let initOpts: object = {};
         if (props.customInitOptions) {
             try { initOpts = JSON.parse(props.customInitOptions); } catch { /* ignore */ }
         }
-        chartRef.current = echarts.init(containerRef.current, undefined, { renderer: "canvas", ...initOpts });
+        chartRef.current = echarts.init(containerRef.current, props.themeName || undefined, { renderer: "canvas", ...initOpts });
+        chartRef.current.resize();
         return () => {
             chartRef.current?.dispose();
             chartRef.current = null;
         };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [reInitKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Reinitialize when the Theme Loader registers a matching theme at runtime
+    useEffect(() => {
+        if (!props.themeName) return;
+        const handler = (e: Event) => {
+            const { themeName } = (e as CustomEvent<{ themeName: string }>).detail ?? {};
+            if (themeName === props.themeName) setReInitKey(k => k + 1);
+        };
+        window.addEventListener(EVENT_NAME, handler);
+        return () => window.removeEventListener(EVENT_NAME, handler);
+    }, [props.themeName]);
 
     // Update option on every render
     useEffect(() => {
