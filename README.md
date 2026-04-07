@@ -697,6 +697,9 @@ if $currentObject/Status = 'Critical' then '#e74c3c' else '#2ecc71'
 
 ## ECharts Theme Loader
 
+![ECharts Theme Loader / Theme Loader](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsThemeLoader.png)
+
+
 The **ECharts Theme Loader** is a non-visual helper widget. It takes a theme name and a JSON theme definition, registers the theme at runtime, and notifies all chart widgets on the same page to reinitialize with it.
 
 Place it once on a shared layout so every page automatically receives the theme. Chart widgets pick up the theme by setting their **Theme name** property to the same value.
