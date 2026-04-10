@@ -16,7 +16,7 @@ The package ships five widgets:
 
 All widgets share a consistent design: connect a Mendix data source, map attributes, and optionally fine-tune with a JSON override — no custom JavaScript required.
 
-Theme support lets every chart pick up the colors, fonts, and axis styles of your Mendix Atlas UI theme automatically. See **[docs/theming.md](docs/theming.md)** for a complete guide.
+Theme support lets every chart pick up the colors, fonts, and axis styles of your Mendix Atlas UI theme automatically. See **[docs/theming.md](https://github.com/LuchKlooster/MendixConventECharts/docs/theming.md)** for a complete guide.
 
 A demo Mendix project is available at **[github.com/LuchKlooster/MendixConventEChartsDemo](https://github.com/LuchKlooster/MendixConventEChartsDemo)**.    
 Demo project is live to be seen at **[https://echartsdemo100-sandbox.mxapps.io/index.html](https://echartsdemo100-sandbox.mxapps.io/index.html)**.
