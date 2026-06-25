@@ -5,10 +5,27 @@
 
 A high-performance data grid widget for Mendix, built on [react-data-grid](https://github.com/adazzle/react-data-grid). Supports large datasets, multi-column sorting, client-side filtering, row grouping, export to CSV / Excel / PDF, master/detail panels, and per-user personalization.
 
+<<<<<<< HEAD
 **Author:** Luch Klooster — Convent Systems  
 **Version:** 1.0.0  
 **Platform:** Mendix Web (pluggable widget, offline-capable)  
 **Category:** Data containers
+=======
+| Widget | Use case |
+| --- | --- |
+| ECharts Line chart | Trends over time, comparisons between series |
+| ECharts Bar chart | Category comparisons, vertical or horizontal |
+| ECharts Pie / Donut chart | Part-to-whole relationships |
+| ECharts Gauge chart | Speedometer / multi-needle gauge; up to 3 independent series on one dial |
+| ECharts Theme Loader | Registers an ECharts color theme so all chart widgets on the page use your application's brand colors |
+
+All widgets share a consistent design: connect a Mendix data source, map attributes, and optionally fine-tune with a JSON override — no custom JavaScript required.
+
+Theme support lets every chart pick up the colors, fonts, and axis styles of your Mendix Atlas UI theme automatically. See **[docs/theming.md](https://github.com/LuchKlooster/MendixConventECharts//tree/main/docs/theming.md)** for a complete guide.
+
+A demo Mendix project is available at **[github.com/LuchKlooster/MendixConventEChartsDemo](https://github.com/LuchKlooster/MendixConventEChartsDemo)**.    
+Demo project is live to be seen at **[https://echartsdemo100-sandbox.mxapps.io/index.html](https://echartsdemo100-sandbox.mxapps.io/index.html)**.
+>>>>>>> d476e6cf1c9e828c999d832ee61e7b782b980309
 
 ---
 
