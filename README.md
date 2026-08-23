@@ -1,16 +1,11 @@
-# React Data Grid — Mendix Pluggable Widget
+# ConventECharts — Mendix Widget Package
 
-![ConventSystems](https://github.com/LuchKlooster/MendixConventReactDataGrid/blob/main/docs/images/CS64x64.png)............![ECharts](https://github.com/LuchKlooster/MendixConventReactDataGrid/blob/main/docs/images/DataGrid.svg)
+![ConventSystems](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/CS64x64.png)............![ECharts](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsLogo.png)
 
+**ConventECharts** is a collection of high-quality, data-driven chart widgets for Mendix, built on top of [Apache ECharts](https://echarts.apache.org/) v6. ECharts is a mature, production-ready charting library used worldwide, offering smooth animations, rich interactivity (tooltips, zoom, click events), and exceptional rendering performance via an HTML5 canvas.
 
-A high-performance data grid widget for Mendix, built on [react-data-grid](https://github.com/adazzle/react-data-grid). Supports large datasets, multi-column sorting, client-side filtering, row grouping, export to CSV / Excel / PDF, master/detail panels, and per-user personalization.
+The package ships five widgets:
 
-<<<<<<< HEAD
-**Author:** Luch Klooster — Convent Systems  
-**Version:** 1.0.0  
-**Platform:** Mendix Web (pluggable widget, offline-capable)  
-**Category:** Data containers
-=======
 | Widget | Use case |
 | --- | --- |
 | ECharts Line chart | Trends over time, comparisons between series |
@@ -21,282 +16,765 @@ A high-performance data grid widget for Mendix, built on [react-data-grid](https
 
 All widgets share a consistent design: connect a Mendix data source, map attributes, and optionally fine-tune with a JSON override — no custom JavaScript required.
 
-Theme support lets every chart pick up the colors, fonts, and axis styles of your Mendix Atlas UI theme automatically. See **[docs/theming.md](https://github.com/LuchKlooster/MendixConventECharts//tree/main/docs/theming.md)** for a complete guide.
+Theme support lets every chart pick up the colors, fonts, and axis styles of your Mendix Atlas UI theme automatically. See **[docs/theming.md](https://github.com/LuchKlooster/MendixConventECharts/docs/theming.md)** for a complete guide.
 
 A demo Mendix project is available at **[github.com/LuchKlooster/MendixConventEChartsDemo](https://github.com/LuchKlooster/MendixConventEChartsDemo)**.    
 Demo project is live to be seen at **[https://echartsdemo100-sandbox.mxapps.io/index.html](https://echartsdemo100-sandbox.mxapps.io/index.html)**.
->>>>>>> d476e6cf1c9e828c999d832ee61e7b782b980309
 
 ---
 
-## Features at a glance
 
-| Feature | Description |
-|---|---|
-| Columns | Attribute, dynamic text, or custom content (widgets) per column |
-| Sorting | Multi-column server-side sorting (click/ctrl-click column header)|
-| Filtering | Per-column client-side header filters with operator support |
-| Row selection | Multi-select with checkboxes and row-level actions |
-| Export | CSV, Excel (.xlsx) and PDF download |
-| Summary row | Sum, count, or average aggregates per numeric column |
-| Group by | Collapse rows into expandable groups on one or more columns |
-| Column chooser | Show/hide individual columns at runtime |
-| Column reordering | Drag-and-drop column reordering |
-| Master / detail | Expandable detail panel per row (e.g. nested grid) |
-| Personalization | Persist sort, filter, column order and visibility per user |
-| Cell highlighting | Built-in CSS classes for colour-coded cells |
-| Progress bar | Render numeric 0–100 values as a horizontal bar |
-| Toolbar | Drop zone for custom widgets (e.g. import button) |
+## Common concepts
+
+
+### Data set modes
+
+The Line and Bar charts support two modes per series, selectable via **Data set**:
+
+- **Single series** — one data source, one line or bar group. Use this when each record is one data point.
+- **Multiple series** — one data source split into series by a **Group by** attribute. All records go into one query; ECharts divides them by the group value automatically.
+
+
+### Aggregation
+
+When multiple records share the same X / category value, the widget can aggregate before rendering. Available functions: None, Count, Sum, Average, Minimum, Maximum, Median, Mode, First, Last. Set to **None** if your data is already aggregated.
+
+
+### Legend
+
+All four widgets support showing or hiding the legend. Position can be set to **Top**, **Bottom**, **Left**, or **Right**. Left/Right positions use a vertical legend orientation; the chart grid automatically adjusts its margins to prevent overlap.
+
+
+### Toolbox
+
+All four widgets have a **Show toolbox** toggle. When enabled, ECharts renders its built-in toolbox in the top-right corner of the chart with three tools:
+
+| Tool | Description |
+| --- | --- |
+| Data view | Opens a table of the raw series data in a modal overlay |
+| Restore | Resets the chart to its original state (zoom, pan, highlight) |
+| Save as image | Downloads the chart canvas as a PNG file |
+
+For a customized toolbox — adding tools such as **Magic type** (line/bar toggle), **Data zoom**, or **Brush** — leave **Show toolbox** off and configure the toolbox via **Custom chart option** instead:
+
+```json
+{
+  "toolbox": {
+    "feature": {
+      "magicType": { "show": true, "type": ["line", "bar"] },
+      "dataZoom": { "show": true },
+      "saveAsImage": { "show": true }
+    }
+  }
+}
+```
+
+
+### Dimensions
+
+Each widget has an independent **Width** and **Height** setting:
+
+- Width unit: **Percentage** (of parent) or **Pixels**
+- Height unit: **Percentage of width** (maintains aspect ratio), **Pixels**, or **Percentage of parent**
+
+Default is 100% wide × 75% of width, giving a 4:3 landscape proportion.
+
+
+### Advanced — Custom chart option
+
+Every widget exposes a **Custom chart option** field. Enter a JSON object that is deep-merged into the ECharts option at render time. This gives access to a broad set of ECharts features — colors, fonts, toolbox, data zoom, mark lines, mark areas, visual map, brush selection, polar coordinates, and more — without touching code.
+
+When **Custom chart option** contains a value, the datasource validation on series is relaxed — series entries without a datasource are allowed. This makes it possible to render a fully custom chart (e.g. a polar chart with all data embedded in the option) without configuring any Mendix datasource on the widget.
+
+Example — add a data zoom slider to a line chart:
+
+```json
+{
+  "dataZoom": [{ "type": "slider", "xAxisIndex": 0 }]
+}
+```
+
+
+### Advanced — Custom init options
+
+A JSON object passed directly to `echarts.init()`. Use this to change the renderer or set device pixel ratio:
+
+```json
+{ "renderer": "svg", "devicePixelRatio": 2 }
+```
+
+
+### Advanced — Theme name
+
+The name of an ECharts color theme registered by the **ECharts Theme Loader** widget. When set, the chart reinitializes with that theme after the loader has registered it. All four chart widgets support this property.
+
+Leave empty to use ECharts' built-in default theme. See **[docs/theming.md](docs/theming.md)** for a complete setup guide.
+
+
+### Dark mode
+
+All four chart widgets have a **Dark mode** property. It accepts a **boolean expression**, so it can be driven at runtime by a Mendix boolean attribute, page variable, or any boolean expression — no rebuild required.
+
+When the expression evaluates to `true`, the chart reinitializes using ECharts' built-in `dark` theme: dark background, light axis lines, and a palette suited for dark interfaces. When it evaluates to `false`, the chart uses either the **Theme name** theme or the ECharts default.
+
+**Dark mode takes precedence over Theme name.** If both are set and Dark mode is `true`, the dark theme is used.
+
+Typical setup — add a boolean page variable `$DarkMode` and toggle it with a button:
+
+| Widget property | Value |
+| --- | --- |
+| Dark mode | `$DarkMode` |
+
+The chart switches theme immediately when the variable changes, without a page reload.
 
 ---
 
-## Installation
 
-1. Copy `conventsystems.ReactDataGrid.mpk` into the `widgets/` folder of your Mendix project.
-2. In Studio Pro: **App** → **Synchronize App Directory** (F4).
-3. Drag the **React Data Grid** widget from the toolbox onto a page.
+## ECharts Line chart
 
----
+![ECharts Line chart](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsLineChart.png)
 
-## Configuration
 
-### General — Data source
+Renders one or more lines on a shared X/Y axis. Supports area fill, curved interpolation, data point markers, and an animated timeline slider.
 
-| Property | Required | Description |
-|---|---|---|
-| Data source | Yes | The list datasource that provides the rows |
 
-### General — Columns
+### Series properties
 
-Add one entry per column. Each column has two property groups:
-
-#### Column
-
-| Property | Default | Description |
-|---|---|---|
-| Show | Attribute | How to display cell content: **Attribute**, **Dynamic text**, or **Custom content** |
-| Attribute | — | The entity attribute to display (String, Integer, Long, Decimal, Boolean, DateTime, Enum, AutoNumber) |
-| Header | — | Column header text |
-| Width (px) | 150 | Initial column width |
-| Dynamic text | — | Text template evaluated per row (active when Show = Dynamic text) |
-| Custom content | — | Widget(s) rendered per row, e.g. a button or image (active when Show = Custom content) |
-| Sortable | false | Enable multi-column server-side sorting on this column |
-| Resizable | true | Let users drag the column edge to resize |
-| Freeze column | false | Pin this column to the left so it stays visible while scrolling horizontally |
-| Group by | false | Use this column as a grouping level (see [Group by](#group-by)) |
-
-#### Formatting (attribute columns only)
-
-| Property | Default | Description |
-|---|---|---|
-| Cell class | — | Expression returning a CSS class name per row (see [Cell highlighting](#cell-highlighting)) |
-| Display style | Value | **Value** = plain text. **Progress bar** = horizontal bar for numeric 0–100 values |
-| Alignment | Auto | Auto = right for numbers, center for boolean, left otherwise |
-| Decimal places | -1 | Fixed decimal places for numeric values; -1 uses the Mendix default format |
-| Currency symbol | — | Prefix symbol (e.g. `€`, `$`, `£`). Only applied when Decimal places ≥ 0 |
-| Date format | — | Mendix date pattern, e.g. `dd-MM-yyyy`, `dd-MM-yyyy HH:mm`, `EEEE d MMMM yyyy`. Empty = Mendix default |
-| Aggregate | None | Summary row aggregate: **Sum**, **Count**, or **Average** (see [Summary row](#summary-row)) |
-
----
-
-### Row Selection
-
-| Property | Default | Description |
-|---|---|---|
-| Enable row selection | false | Show checkboxes for multi-row selection |
-| On row selected | — | Action executed in the context of a row when it is added to the selection |
-| On row deselected | — | Action executed in the context of a row when it is removed from the selection |
-
----
-
-### Export
-
-| Property | Default | Description |
-|---|---|---|
-| Enable CSV export | false | Show an **Export CSV** button in the toolbar |
-| Enable Excel export | false | Show an **Export Excel** button in the toolbar (downloads `.xlsx`) |
-| Enable PDF export | false | Show an **Export PDF** button in the toolbar (downloads `.pdf`) |
-| Export filename | `export` | Filename without extension used for all export formats |
-
-Export respects the current filter state — only rows visible in the grid are exported. Column headers are included in all formats.
-
----
-
-### Toolbar
+Each entry in the **Series** list defines one line (or a group of lines in Multiple series mode).
 
 | Property | Description |
-|---|---|
-| Toolbar widgets | Additional widgets rendered next to the export buttons (e.g. an import button or a search field) |
+| --- | --- |
+| Data set | Single series or Multiple series (grouped) |
+| Data source | Mendix data source providing the records |
+| Group by | Attribute used to split records into separate lines (Multiple series only) |
+| Series name | Text displayed in the legend |
+| X axis attribute | Horizontal axis value — String, Enum, DateTime, or numeric |
+| Y axis attribute | Vertical axis value — String, Enum, DateTime, or numeric |
+| Aggregation function | How to combine records with the same X value |
+| Tooltip hover text | Custom text shown in the tooltip on hover. Supports attribute tokens |
+| Series type | **Line** (default) or **Bar** — renders this series as bars on the same chart, creating a combo chart without leaving the Line chart widget |
+| Interpolation | **Linear** (straight segments) or **Curved** (smooth spline) |
+| Line style | **Line**, **Line with markers**, or **Custom** (uses Custom series options) |
+| Line color | CSS color expression evaluated per record, e.g. `'#3a7bd5'` |
+| Marker color | CSS color for data point markers |
+| Fill area | When enabled, fills the area below the line, turning it into an area chart |
+| Unit | Text appended to the Y value in the tooltip, e.g. `km/h` or `%` |
+| Y axis index | `0` for the primary (left) Y-axis, `1` for a secondary (right) Y-axis. Configure the second axis via **Custom chart option** |
+| On click action | Mendix action triggered when the user clicks a data point |
+| Timeline attribute | Groups records into timeline steps. Each unique value is one step |
+| Custom series options | JSON merged into this series' ECharts series config (active when Line style = Custom) |
 
----
 
-### Behavior
-
-| Property | Default | Description |
-|---|---|---|
-| On row click | — | Action executed when the user clicks a data row (not triggered by the checkbox column) |
-| Empty placeholder | `No data` | Text shown when the data source returns zero rows |
-
----
-
-### Master / Detail
-
-| Property | Default | Description |
-|---|---|---|
-| Enable master / detail | false | Show an expand toggle (▶) on each row |
-| Detail content | — | Widget(s) rendered in the collapsible panel below the row (e.g. a nested Data Grid scoped via an association) |
-| Detail panel height (px) | 200 | Height of the expanded panel |
-
-Configure the detail content by selecting it in the Studio Pro structure panel below the widget. Each detail panel is rendered in the context of its parent row's object, so associations and derived datasources work naturally.
-
----
-
-### Personalization
+### Chart-level properties
 
 | Property | Description |
-|---|---|
-| Configuration attribute | Unlimited String attribute to persist the user's filter values, sort order, column order, and visible columns. Wrap the widget in a Data view to supply the attribute. |
-| On configuration change | Action executed after the attribute is updated (typically a Commit action) |
+| --- | --- |
+| X axis label | Label displayed below the X axis |
+| X axis date format | Format pattern for DateTime X values. Tokens: `yyyy`, `MM`, `dd`, `HH`, `mm`, `ss`. Example: `dd-MM-yyyy` |
+| Y axis label | Label displayed to the left of the Y axis |
+| Show legend / Legend position | Toggle and position the series legend |
+| Grid lines | **None**, **Horizontal**, **Vertical**, or **Both** |
+| Background color | CSS color for the chart canvas background. Leave empty for transparent |
+| Dark mode | Boolean expression. When `true`, the ECharts built-in dark theme is applied. Bind to a boolean attribute or page variable to switch at runtime. Overrides Theme name |
 
-When a configuration attribute is linked, user preferences survive page refreshes and browser restarts. Settings are stored as JSON; the attribute should be **Unlimited** length.
 
----
+### Dual Y-axis
 
-### Filtering
+Assign series to a secondary Y-axis by setting **Y axis index** to `1`. Define the second axis in **Custom chart option**:
 
-| Property | Default | Description |
-|---|---|---|
-| Enable header filters | false | Show a filter input row inside each column header |
-
-Filtering is client-side and instantaneous. Supported syntax per column type:
-
-| Attribute type | Examples |
-|---|---|
-| String / Enum / DateTime | Substring match (case-insensitive): `smith`, `2024` |
-| Integer / Long / Decimal / AutoNumber | Exact: `42` — Operators: `>100`, `<=50`, `>=0`, `<10`, `=5` |
-| Boolean | `true` or `false` |
-
----
-
-### Summary row
-
-| Property | Default | Description |
-|---|---|---|
-| Summary position | None | **Top** or **Bottom** — adds a sticky summary row to the grid |
-
-Configure the aggregate function per column in **Columns → Formatting → Aggregate**:
-
-- **Sum (∑)** — numeric attribute columns only
-- **Count (#)** — any column type; counts visible rows
-- **Average (⌀)** — numeric attribute columns only
-
-Summary values update automatically when header filters are active.
-
----
-
-### Appearance
-
-| Property | Default | Description |
-|---|---|---|
-| Enable group by | false | Show a **Group by** toolbar button and group-by bar |
-| Enable column chooser | false | Show a **Columns** toolbar button for show/hide per column |
-| Enable column reordering | false | Allow drag-and-drop reordering of column headers |
-| Row height (px) | 35 | Height of each data row |
-| Grid height (px) | 400 | Total height of the grid container |
-
----
-
-## Group by
-
-1. Set **Enable group by** to `true` in the Appearance section.
-2. On each column that should be available as a grouping level, set **Group by** to `true`.
-3. At runtime, click the **Group by** button in the toolbar to open the group-by bar.
-4. Toggle columns on or off in the bar to add/remove grouping levels.
-5. Multiple active levels create nested groups; the nesting order follows the column order in the widget configuration.
-6. Click a group header row to expand or collapse it.
-
----
-
-## Cell highlighting
-
-The **Cell class** expression on a column can return any CSS class. The following classes are built in:
-
-| Class | Style |
-|---|---|
-| `rdg-cell--danger` | Red background, red bold text |
-| `rdg-cell--warning` | Amber background, dark amber text |
-| `rdg-cell--success` | Green background, green text |
-| `rdg-cell--info` | Cyan background, dark cyan text |
-| `rdg-cell--muted` | Grey text |
-
-Example expression:
-
-```
-if $currentObject/Status = 'Overdue' then 'rdg-cell--danger'
-else if $currentObject/Status = 'AtRisk' then 'rdg-cell--warning'
-else ''
+```json
+{
+  "yAxis": [
+    { "type": "value", "name": "Revenue (€)" },
+    { "type": "value", "name": "Growth (%)", "position": "right" }
+  ]
+}
 ```
 
+Series with **Y axis index** `0` plot against the left axis; series with `1` plot against the right axis.
+
+
+### Timeline
+
+When **Enable timeline** is on and at least one series has a **Timeline attribute** configured, ECharts renders a slider below the chart. Each distinct value of the timeline attribute becomes one step.
+
+| Property | Description |
+| --- | --- |
+| Enable timeline | Activates the timeline slider |
+| Timeline date format | Format for DateTime step labels |
+| Auto play | Automatically advances through steps on load |
+| Loop | Restarts from step 1 after the last step |
+| Play interval (ms) | Time between automatic steps. Default: 2000 |
+| Show rewind button | Adds a rewind button to the slider |
+
+
+### Race animation
+
+The **race animation** mode reveals data cumulatively, step by step, to create an animated "bar/line race" effect — ideal for showing how values accumulate over time (e.g. GDP per country per year, cumulative sales).
+
+Enable it with **Enable race animation**. Like the timeline, it requires a **Timeline attribute** on each series that groups records into ordered steps. At each interval the chart appends the next step's data to everything already shown.
+
+| Property | Description |
+| --- | --- |
+| Enable race animation | Switches the chart to race mode. Disable **Enable timeline** when using this — the two modes are mutually exclusive |
+| Race play interval (ms) | Time between steps in milliseconds. Default: 1000 |
+| Race loop | When enabled, the animation restarts from the first step after the last |
+
+**Notes:**
+
+
+- The X axis is forced to a numeric **value** axis in race mode (not category). X values should be numeric (e.g. a year integer).
+- The X and Y axis ranges are fixed to the full dataset from the start so the axes do not rescale as data accumulates.
+- Set **Aggregation function** to **None** if data is already pre-aggregated per step.
+- A secondary Y-axis label can be shown as a graphic overlay using **Custom chart option** with an ECharts `graphic` element.
+
 ---
 
-## CSS customisation
 
-The widget root element has the class `widget-react-data-grid`. All internal classes use the `rdg-` prefix and can be overridden in your theme CSS. Key classes:
+## ECharts Bar chart
 
-| Class | Element |
-|---|---|
-| `widget-react-data-grid` | Outer container |
-| `.rdg-toolbar` | Toolbar bar |
-| `.rdg-toolbar__btn` | Toolbar buttons |
-| `.rdg-groupby-bar` | Group-by bar |
-| `.rdg-header-filter-input` | Filter text inputs |
-| `.rdg-header-filter-select` | Filter dropdowns (boolean / enum) |
-| `.rdg-summary-row` | Summary row |
-| `.rdg-cell-progress` | Progress bar container |
-| `.rdg-empty-placeholder` | Empty state message |
+![ECharts Bar chart](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsBarChart.png)
 
-The header row background colour defaults to `var(--brand-default, #264ae5)`. Override it with the Mendix theme variable `--brand-default` or a targeted CSS rule.
 
----
+Renders one or more bar series on a shared category/value axis. Bars can be vertical or horizontal, grouped side-by-side, or stacked. Shares the same timeline feature as the Line chart.
 
-## Development
 
-### Prerequisites
+### Bar series properties
 
-- Node.js ≥ 16
-- A Mendix project with the widget source placed under `{app}/myPluggableWidgets/ReactDataGrid/`
+| Property | Description |
+| --- | --- |
+| Data set | Single series or Multiple series (grouped) |
+| Data source | Mendix data source |
+| Group by | Attribute used to split records into separate bar series (Multiple series only) |
+| Series name | Text shown in the legend |
+| Category attribute | The axis used for categories (X for vertical bars, Y for horizontal bars). Accepts String, Enum, DateTime, or numeric |
+| Value attribute | The numeric axis — Decimal, Integer, Long, or AutoNumber |
+| Aggregation function | Aggregation applied when multiple records share the same category |
+| Series type | **Bar** (default) or **Line** — renders this series as a line on the bar chart, creating a combo chart |
+| Tooltip hover text | Custom tooltip text |
+| Bar color | CSS color expression per record |
+| Unit | Text appended to the value in the tooltip, e.g. `€` or `%` |
+| Y axis index | `0` for the primary (left) value axis, `1` for a secondary (right) value axis |
+| On click action | Mendix action triggered on bar click |
+| Timeline attribute | Groups records into timeline steps |
+| Custom series options | JSON merged into the ECharts series config for this bar series |
 
-### Commands
 
-```bash
-# One-time dependency install
-npm install
+### Bar series appearance — Color dimension
 
-# Development server (hot reload)
-npm run dev
+Each bar series has an optional **Color dimension attribute**. When set, the widget passes the attribute value as a third data dimension alongside the category and bar value. Combined with a `visualMap` in **Custom chart option**, this lets ECharts color each bar individually based on a separate numeric score — independent of the bar's height or length.
 
-# Production build → dist/1.0.0/conventsystems.ReactDataGrid.mpk
-npm run build
+The color dimension data is exposed as the named dimension **`colorDim`** (index 2) in the ECharts dataset. Reference it in `visualMap` with `"dimension": "colorDim"` (or `"dimension": 2`).
 
-# Lint
-npm run lint
-npm run lint:fix
+
+#### Example — horizontal bars colored by score
+
+Series setup:
+
+| Setting | Value |
+| --- | --- |
+| Category attribute | Product name |
+| Value attribute | Amount sold |
+| Color dimension attribute | Score (0–100) |
+| Bar color | *(leave empty)* |
+
+Custom chart option — visualMap on the right:
+
+```json
+{
+  "visualMap": {
+    "show": true,
+    "min": 0,
+    "max": 100,
+    "dimension": "colorDim",
+    "orient": "vertical",
+    "right": 10,
+    "top": "center",
+    "text": ["High score", "Low score"],
+    "inRange": {
+      "color": ["#50a3ba", "#eac736", "#d94e5d"]
+    }
+  },
+  "grid": { "right": "15%" }
+}
 ```
 
-The build output is automatically placed in `dist/1.0.0/`. Copy the `.mpk` file to your project's `widgets/` folder and run **F4** in Studio Pro to pick up changes.
+Custom chart option — visualMap at the bottom:
 
-### Dependencies
+```json
+{
+  "visualMap": {
+    "show": true,
+    "min": 0,
+    "max": 100,
+    "dimension": "colorDim",
+    "orient": "horizontal",
+    "left": "center",
+    "bottom": 0,
+    "text": ["High score", "Low score"],
+    "inRange": {
+      "color": ["#50a3ba", "#eac736", "#d94e5d"]
+    }
+  },
+  "grid": { "bottom": "15%" }
+}
+```
 
-| Package | Version | Purpose |
-|---|---|---|
-| react-data-grid | 7.0.0-beta.44 | Core grid engine |
-| xlsx | ^0.18.5 | CSV and Excel export |
-| jsPDF + jspdf-autotable | (bundled) | PDF export |
+> The `grid` override reserves space so the visualMap does not overlap the bars. Adjust the percentage to match the number of text lines and gradient bar height. Set `"Bar color"` to empty when using visualMap — otherwise the series color overrides the visualMap coloring.
+
+
+### Bar chart-level properties
+
+| Property | Description |
+| --- | --- |
+| Horizontal bars | Rotates the chart so bars grow left-to-right |
+| Stack series | Stacks all series on top of each other instead of placing them side by side |
+| Bar width | Width of each bar: percentage (`60%`) or pixels (`20`). Leave empty for auto |
+| Category axis label | Label for the category axis |
+| Category date format | Format for DateTime category labels |
+| Value axis label | Label for the value axis |
+| Show legend / Legend position | Toggle and position the legend |
+| Grid lines | None, Horizontal, Vertical, or Both |
+| Background color | CSS background color |
+| Dark mode | Boolean expression. When `true`, the ECharts built-in dark theme is applied. Bind to a boolean attribute or page variable to switch at runtime. Overrides Theme name |
+
+The **Timeline** settings are identical to the Line chart.
 
 ---
 
-## Limitations
 
-- Filtering is **client-side only**. For server-side filtering, configure constraints on the datasource using Mendix page variables or microflow-driven datasources.
-- The **Export** buttons export the rows currently loaded in the grid. If the datasource uses server-side paging, only the loaded page is exported. Disable paging or load all rows before exporting.
-- Inline cell editing is not supported. Mendix's pluggable widget API marks list-context attributes as read-only at the framework level; use a row-click action to open a pop-up form for editing instead.
+## ECharts Pie / Donut chart
+
+![ECharts Pie / Donut chart](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsPieChart.png)
+
+
+Renders one or more concentric pie rings. Can be configured as a standard pie, a donut, or a Nightingale rose chart. Does not have X/Y axes; data is a list of slices with a label and a numeric value.
+
+
+### Pie series properties
+
+Each entry in the **Series** list defines one ring (concentric charts use multiple entries).
+
+| Property | Description |
+| --- | --- |
+| Data set | **Single ring** — one data source, one ring. **Multiple rings** — records grouped by the Group by attribute, each group becoming a concentric ring |
+| Data source | Mendix data source |
+| Group by | Attribute used to create multiple rings from one query |
+| Ring name | Name of the ring, shown in multi-ring legends |
+| Slice label attribute | Attribute whose value is the slice name |
+| Value attribute | Numeric attribute that determines the size of the slice |
+| Aggregation function | How to combine records with the same slice label. Default: Sum |
+| Tooltip hover text | Custom tooltip content |
+| Slice color | CSS color expression per record |
+| On click action | Mendix action triggered on slice click |
+| Custom series options | JSON merged into this ring's ECharts series config |
+
+
+### Pie chart-level properties
+
+| Property | Description |
+| --- | --- |
+| Donut | Renders the chart with a hollow centre |
+| Inner radius | Size of the donut hole, e.g. `40%`. Default: 40% |
+| Outer radius | Outer size of the chart, e.g. `70%`. Default: 70% |
+| Rose / Nightingale | Also varies the radius of each slice proportionally to its value, creating a Nightingale rose chart |
+| Show legend / Legend position | Toggle and position the legend |
+| Background color | CSS background color |
+| Dark mode | Boolean expression. When `true`, the ECharts built-in dark theme is applied. Bind to a boolean attribute or page variable to switch at runtime. Overrides Theme name |
+
+---
+
+
+## ECharts Gauge chart
+
+![ECharts Gauge chart](https://github.com/LuchKlooster/MendixConventECharts/blob/main/docs/images/EChartsGaugeChart.png)
+
+
+Renders a speedometer-style gauge. Supports two modes:
+
+- **Context mode** — up to three fixed series read from a surrounding Data View. Best for a small, known set of attributes (e.g. a clock with Hour, Minute, Second).
+- **List mode** — a list data source where every record becomes one needle in a single shared series. Best for a variable number of items stored as rows in a persistent entity (e.g. Good / Better / Perfect KPI indicators).
+
+
+### Setup — context mode
+
+1. Add a **Data View** to your page with the entity that holds the gauge values (e.g. a non-persistent entity with `Hour`, `Minute`, `Second` attributes).
+2. Place the **ECharts Gauge Chart** widget inside the Data View.
+3. In **Series 1**, set **Value attribute** to the primary attribute.
+4. Optionally set **Series 2** and **Series 3** to additional attributes — this activates multi-series mode automatically.
+
+
+### Setup — list mode (multi-needle)
+
+1. Place the widget **directly on the page** — no surrounding Data View needed.
+2. In the **Multi-needle (list)** property group, enable **Use list data source**.
+3. Set **Data source** to a **Database** (XPath) data source on your persistent entity. Avoid microflow data sources — they cause repeated fetching with non-persistent entities.
+4. Set **Value attribute** and **Label attribute** to the numeric and name attributes.
+5. Paste the series styling in **Custom options (list series)**.
+
+The widget automatically spaces title and detail labels evenly across the dial. For 3 items the positions are −40 %, 0 %, and 40 %; for any other count they are calculated proportionally.
+
+
+### Multi-needle (list) properties
+
+Visible only when **Use list data source** is enabled.
+
+| Property | Description |
+| --- | --- |
+| Use list data source | Switches the widget to list mode. Hide Series 1/2/3 and show the list properties instead |
+| Data source | Persistent entity data source (use Database / XPath — not a microflow returning NPEs) |
+| Value attribute | Numeric attribute for the needle value |
+| Label attribute | String or Enum attribute for the needle label |
+| Custom options (list series) | JSON merged into the shared ECharts series config — pointer style, progress, anchor, detail formatter, etc. |
+
+
+### Series configuration (context mode)
+
+The widget has three series groups: **Series 1**, **Series 2**, and **Series 3**. Series 2 and 3 are optional; they activate when a value attribute is selected.
+
+| Property | Description |
+| --- | --- |
+| Value attribute | Numeric context attribute for the needle — Decimal, Integer, Long, or AutoNumber |
+| Label | Text template shown below the needle tip |
+| Minimum *(Series 2 & 3)* | Minimum of the scale for this series. Default: 0 |
+| Maximum *(Series 2 & 3)* | Maximum of the scale for this series. Default: 100 |
+| Custom options *(per series)* | JSON object merged into this series' ECharts config — controls pointer style, axis visibility, detail label, etc. |
+
+The **Minimum** and **Maximum** for Series 1 are taken from the General **Minimum** / **Maximum** properties.
+
+
+### Scale properties
+
+| Property | Description |
+| --- | --- |
+| Minimum | Minimum value on the gauge scale (applies to Series 1). Default: 0 |
+| Maximum | Maximum value on the gauge scale (applies to Series 1). Default: 100 |
+| Units | Suffix appended to the value in the centre label, e.g. `km/h` or `%` |
+| Start angle | Start of the gauge arc in degrees, counter-clockwise from 3 o'clock. Default: 225 |
+| End angle | End of the gauge arc in degrees, counter-clockwise from 3 o'clock. Default: -45 |
+| Split number | Number of major tick intervals on the arc. Default: 10 |
+
+The default start/end angles (225° / -45°) produce the classic speedometer arc with a gap at the bottom.
+
+
+### Appearance properties
+
+| Property | Description |
+| --- | --- |
+| Show progress bar | Fills the arc from the minimum to the current value, creating a coloured progress indicator |
+| Color ranges | JSON array of `[threshold, color]` pairs. Each threshold is a **fraction** (0–1) of the full scale range. The last pair should always be `[1, "color"]` |
+| Show legend / Legend position | Toggle and position the needle legend |
+| Background color | CSS background color |
+| Dark mode | Boolean expression. When `true`, the ECharts built-in dark theme is applied. Bind to a boolean attribute or page variable to switch at runtime. Overrides Theme name |
+
+
+#### Color ranges explained
+
+Color ranges define the background color of the gauge arc in bands. A threshold of `0.3` means "up to 30% of the way between minimum and maximum". Example:
+
+```json
+[[0.3, "#67e0e3"], [0.7, "#37a2da"], [1, "#fd666d"]]
+```
+
+This produces: teal for the lower 30%, blue for 30–70%, red for 70–100%.
+
+
+### Formatter functions
+
+The `axisLabel.formatter` and `detail.formatter` fields inside **Custom options** accept a JavaScript function written as a string. The widget converts it to a real function at render time.
+
+Example — hide the `0` label on the clock face:
+
+```json
+"axisLabel": {
+  "fontSize": 50,
+  "distance": 25,
+  "formatter": "function(value) { return value === 0 ? '' : value + ''; }"
+}
+```
+
+Any valid single-argument ECharts formatter function body can be used here.
+
+
+### Multi-series tips
+
+In multi-series mode each series renders its own axis decorations (arc, ticks, labels). Usually you want these only on one series — keep them on Series 1 and hide them on the others via **Custom options**:
+
+**Series 1 — hour hand, keep clock face visible:**
+
+```json
+{
+  "clockwise": true,
+  "animation": false,
+  "axisLine": {
+    "lineStyle": {
+      "width": 15,
+      "color": [[1, "rgba(0,0,0,0.7)"]],
+      "shadowColor": "rgba(0,0,0,0.5)",
+      "shadowBlur": 15
+    }
+  },
+  "splitLine": {
+    "lineStyle": {
+      "shadowColor": "rgba(0,0,0,0.3)",
+      "shadowBlur": 3,
+      "shadowOffsetX": 1,
+      "shadowOffsetY": 2
+    }
+  },
+  "axisLabel": {
+    "fontSize": 50,
+    "distance": 25,
+    "formatter": "function(value) { return value === 0 ? '' : value + ''; }"
+  },
+  "pointer": {
+    "icon": "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
+    "width": 12,
+    "length": "55%",
+    "offsetCenter": [0, "8%"],
+    "itemStyle": {
+      "color": "#C0911F",
+      "shadowColor": "rgba(0,0,0,0.3)",
+      "shadowBlur": 8,
+      "shadowOffsetX": 2,
+      "shadowOffsetY": 4
+    }
+  },
+  "detail": { "show": false },
+  "title": { "offsetCenter": [0, "30%"] }
+}
+```
+
+**Series 2 — minute hand:**
+
+```json
+{
+  "clockwise": true,
+  "axisLine": { "show": false },
+  "splitLine": { "show": false },
+  "axisTick": { "show": false },
+  "axisLabel": { "show": false },
+  "pointer": {
+    "icon": "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
+    "width": 8,
+    "length": "70%",
+    "offsetCenter": [0, "8%"],
+    "itemStyle": {
+      "color": "#C0911F",
+      "shadowColor": "rgba(0,0,0,0.3)",
+      "shadowBlur": 8,
+      "shadowOffsetX": 2,
+      "shadowOffsetY": 4
+    }
+  },
+  "anchor": {
+    "show": true,
+    "size": 20,
+    "showAbove": false,
+    "itemStyle": {
+      "borderWidth": 15,
+      "borderColor": "#C0911F",
+      "shadowColor": "rgba(0,0,0,0.3)",
+      "shadowBlur": 8,
+      "shadowOffsetX": 2,
+      "shadowOffsetY": 4
+    }
+  },
+  "detail": { "show": false },
+  "title": { "offsetCenter": ["0%", "-40%"] }
+}
+```
+
+**Series 3 — second hand (no sweep animation on reset):**
+
+```json
+{
+  "clockwise": true,
+  "animation": false,
+  "animationEasingUpdate": "bounceOut",
+  "axisLine": { "show": false },
+  "splitLine": { "show": false },
+  "axisTick": { "show": false },
+  "axisLabel": { "show": false },
+  "pointer": {
+    "icon": "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
+    "width": 4,
+    "length": "85%",
+    "offsetCenter": [0, "8%"],
+    "itemStyle": {
+      "color": "#C0911F",
+      "shadowColor": "rgba(0,0,0,0.3)",
+      "shadowBlur": 8,
+      "shadowOffsetX": 2,
+      "shadowOffsetY": 4
+    }
+  },
+  "anchor": {
+    "show": true,
+    "size": 15,
+    "showAbove": true,
+    "itemStyle": {
+      "color": "#C0911F",
+      "shadowColor": "rgba(0,0,0,0.3)",
+      "shadowBlur": 8,
+      "shadowOffsetX": 2,
+      "shadowOffsetY": 4
+    }
+  },
+  "detail": { "show": false },
+  "title": { "offsetCenter": ["0%", "-40%"] }
+}
+```
+
+
+### Multi-needle list mode example
+
+Based on the [Apache ECharts multi-title gauge example](https://echarts.apache.org/examples/en/editor.html?c=gauge-multi-title).
+
+**Custom options (list series):**
+
+```json
+{
+  "animation": false,
+  "anchor": {
+    "show": true,
+    "showAbove": true,
+    "size": 18,
+    "itemStyle": { "color": "#FAC858" }
+  },
+  "pointer": {
+    "icon": "path://M2.9,0.7L2.9,0.7c1.4,0,2.6,1.2,2.6,2.6v115c0,1.4-1.2,2.6-2.6,2.6l0,0c-1.4,0-2.6-1.2-2.6-2.6V3.3C0.3,1.9,1.4,0.7,2.9,0.7z",
+    "width": 8,
+    "length": "80%",
+    "offsetCenter": [0, "8%"]
+  },
+  "progress": {
+    "show": true,
+    "overlap": true,
+    "roundCap": true
+  },
+  "axisLine": { "roundCap": true },
+  "title": { "fontSize": 14 },
+  "detail": {
+    "width": 40,
+    "height": 14,
+    "fontSize": 14,
+    "color": "#fff",
+    "backgroundColor": "inherit",
+    "borderRadius": 3,
+    "formatter": "{value}%"
+  }
+}
+```
+
+> **Note:** Set `"animation": false` to prevent ghost needle trails when values update frequently. The label positions (`-40%`, `0%`, `40%` for 3 items) are calculated automatically — no manual offset configuration is needed.
+
+
+### Clock gauge example
+
+A clock gauge maps `Hour` (0–12), `Minute` (0–60), and `Second` (0–60) attributes from a Data View onto three series:
+
+| Setting | Value |
+| --- | --- |
+| Start angle | `90` |
+| End angle | `-270` |
+| Series 1 Min / Max | `0` / `12` |
+| Series 2 Min / Max | `0` / `60` |
+| Series 3 Min / Max | `0` / `60` |
+
+Use the **Custom options** blocks above for each series. The result matches the [Apache ECharts clock gauge example](https://echarts.apache.org/examples/en/editor.html?c=gauge-clock).
+
+---
+
+
+## Polar line chart
+
+The Line chart widget supports polar coordinate charts by combining a Mendix datasource with Custom series options and Custom chart option.
+
+
+### Example — Two Value-Axes in Polar
+
+Based on the [Apache ECharts polar line example](https://echarts.apache.org/examples/en/editor.html?c=line-polar2).
+
+**Setup:**
+
+1. Create a persistent entity (e.g. `TwoValueAxesInPolar`) with attributes:
+   - `r` — Decimal (radius value, computed as `sin(2t) * cos(2t)`)
+   - `i` — Integer (angle, 0–360)
+2. Populate 361 records, one per degree.
+3. Add an **ECharts Line Chart** widget to your page (no surrounding Data View needed).
+4. Add one series entry, configured as follows:
+
+**General tab:**
+
+| Setting | Value |
+| --- | --- |
+| Data source | Database datasource on your entity, **sorted by `i` ascending** |
+| Series name | `line` |
+| X axis attribute | `r` (radius) |
+| Y axis attribute | `i` (angle) |
+
+**Appearance tab:**
+
+| Setting | Value |
+| --- | --- |
+| Line style | **Custom** |
+
+**Advanced tab (series):**
+
+```json
+{"coordinateSystem":"polar","showSymbol":false}
+```
+
+**Advanced tab (widget) — Custom chart option:**
+
+```json
+{"title":{"text":"Two Value-Axes in Polar","left":"center"},"polar":{"center":["50%","54%"]},"angleAxis":{"type":"value","startAngle":0},"radiusAxis":{"min":0},"xAxis":{"show":false},"yAxis":{"show":false},"grid":{"show":false}}
+```
+
+> **Important:** The datasource must be sorted by `i` (angle) ascending. ECharts connects data points in the order they arrive — wrong order produces a zig-zag line instead of smooth petals.
+> **Decimal precision:** The widget passes Decimal X-axis values at full precision. For polar charts this ensures smooth curves — no rounding artefacts.
+
+---
+
+
+## Tips and tricks
+
+**Per-record colors** — The color expression fields on line, bar, and pie charts are evaluated for every record. You can return different colors based on attribute values:
+
+```text
+if $currentObject/Status = 'Critical' then '#e74c3c' else '#2ecc71'
+```
+
+**Custom series options for advanced styling** — Set Line style to **Custom** on a line chart series to unlock the full ECharts series API via the Custom series options JSON field. For example, to add a dashed line:
+
+```json
+{ "lineStyle": { "type": "dashed", "width": 2 }, "symbol": "none" }
+```
+
+**Multiple needles, one dial** — Use Series 2 and/or Series 3 (context mode) for a fixed set of needles with independent scales, or enable **Use list data source** (list mode) for a dynamic number of needles from a persistent entity.
+
+**Responsive sizing** — Use **Percentage of width** height with a value of `56` to get a 16:9 chart that scales with the page column width.
+
+---
+
+
+## ECharts Theme Loader
+
+The **ECharts Theme Loader** is a non-visual helper widget. It takes a theme name and a JSON theme definition, registers the theme at runtime, and notifies all chart widgets on the same page to reinitialize with it.
+
+Place it once on a shared layout so every page automatically receives the theme. Chart widgets pick up the theme by setting their **Theme name** property to the same value.
+
+| Property | Description |
+| --- | --- |
+| Theme name | Identifier for the theme. Must match the **Theme name** set on the chart widgets |
+| Theme JSON | ECharts theme object as a JSON string — either hand-crafted or generated by the Atlas extractor tool |
+
+For a step-by-step guide, including how to generate a theme from your Atlas UI SCSS variables, see **[docs/theming.md](docs/theming.md)**.
+
+---
+
+
+## License
+
+Apache-2.0 — © Convent Systems
