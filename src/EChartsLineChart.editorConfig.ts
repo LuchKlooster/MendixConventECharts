@@ -102,13 +102,13 @@ export function getProperties(
             ]);
         }
 
-        if (line.lineStyle !== "custom") {
-            hideInObject(defaultProperties, "lines", i, ["customSeriesOptions"]);
-        }
     });
 
     if (!values.enableAdvancedOptions) {
         hideProperties(defaultProperties, ["customLayout", "customConfigurations"]);
+        values.lines.forEach((_line, i) => {
+            hideInObject(defaultProperties, "lines", i, ["customSeriesOptions"]);
+        });
     }
 
     return defaultProperties;
@@ -142,7 +142,7 @@ export function check(values: EChartsLineChartPreviewProps): Problem[] {
             }
         }
 
-        if (line.lineStyle === "custom" && line.customSeriesOptions) {
+        if (line.customSeriesOptions) {
             try {
                 JSON.parse(line.customSeriesOptions);
             } catch {

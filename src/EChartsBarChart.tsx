@@ -1,4 +1,5 @@
 import { ReactElement, useCallback, CSSProperties } from "react";
+import { DynamicValue } from "mendix";
 import { BarChart } from "./components/BarChart";
 import { buildSeries } from "./utils/seriesBuilder";
 import "./ui/EChartsLineChart.css";
@@ -13,6 +14,7 @@ interface EChartsBarChartContainerProps {
     series: any[];
     enableAdvancedOptions: boolean;
     horizontal: boolean;
+    rangeChart: boolean;
     stack: boolean;
     barWidth: string;
     categoryAxisLabel?: { value?: string };
@@ -34,6 +36,7 @@ interface EChartsBarChartContainerProps {
     heightUnit: "percentageOfWidth" | "pixels" | "percentageOfParent";
     height: number;
     themeName: string;
+    darkMode?: DynamicValue<boolean>;
     customLayout: string;
     customConfigurations: string;
 }
@@ -42,6 +45,7 @@ export function EChartsBarChart(props: EChartsBarChartContainerProps): ReactElem
     const {
         series: seriesProps,
         horizontal,
+        rangeChart,
         stack,
         barWidth,
         categoryAxisLabel,
@@ -63,6 +67,7 @@ export function EChartsBarChart(props: EChartsBarChartContainerProps): ReactElem
         heightUnit,
         height,
         themeName,
+        darkMode,
         customLayout,
         customConfigurations,
         class: className,
@@ -79,7 +84,9 @@ export function EChartsBarChart(props: EChartsBarChartContainerProps): ReactElem
             dynamicLineColor: s.dynamicBarColor,
             // Bar has no interpolation/lineStyle; provide safe defaults
             interpolation: "linear",
-            lineStyle: "line"
+            lineStyle: "line",
+            // seriesType comes from the XML property; default to "bar"
+            seriesType: s.seriesType ?? "bar"
         }))
     );
 
@@ -117,6 +124,7 @@ export function EChartsBarChart(props: EChartsBarChartContainerProps): ReactElem
                 showToolbox={showToolbox}
                 gridLines={gridLines}
                 horizontal={horizontal}
+                rangeChart={rangeChart}
                 stack={stack}
                 barWidth={barWidth || undefined}
                 timelineConfig={enableTimeline ? {
@@ -127,6 +135,7 @@ export function EChartsBarChart(props: EChartsBarChartContainerProps): ReactElem
                     dateFormat: timelineDateFormat || undefined
                 } : undefined}
                 themeName={themeName || undefined}
+                darkMode={darkMode?.value ?? false}
                 customOption={customLayout || undefined}
                 customInitOptions={customConfigurations || undefined}
                 onDataPointClick={onDataPointClick}

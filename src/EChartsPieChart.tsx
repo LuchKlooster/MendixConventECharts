@@ -2,7 +2,7 @@ import { ReactElement, useCallback, CSSProperties } from "react";
 import { PieChart, BuiltPieSeries } from "./components/PieChart";
 import { aggregateDataPoints, DataPoint } from "./utils/aggregation";
 import "./ui/EChartsLineChart.css";
-import { ObjectItem } from "mendix";
+import { DynamicValue, ObjectItem } from "mendix";
 
 interface EChartsPieChartContainerProps {
     name: string;
@@ -24,6 +24,7 @@ interface EChartsPieChartContainerProps {
     heightUnit: "percentageOfWidth" | "pixels" | "percentageOfParent";
     height: number;
     themeName: string;
+    darkMode?: DynamicValue<boolean>;
     customLayout: string;
     customConfigurations: string;
 }
@@ -58,6 +59,9 @@ function buildStaticPieSeries(s: any): BuiltPieSeries {
                 value: p.y,
                 color: firstItem && s.staticSliceColor
                     ? (s.staticSliceColor.get(firstItem).value ?? undefined)
+                    : undefined,
+                selected: firstItem && s.staticSelected
+                    ? (s.staticSelected.get(firstItem).value === true)
                     : undefined,
                 tooltip: p.tooltip ?? "",
                 onClickItem: firstItem
@@ -107,6 +111,9 @@ function buildDynamicPieSeries(s: any): BuiltPieSeries[] {
                     color: firstItem && s.dynamicSliceColor
                         ? (s.dynamicSliceColor.get(firstItem).value ?? undefined)
                         : undefined,
+                    selected: firstItem && s.dynamicSelected
+                        ? (s.dynamicSelected.get(firstItem).value === true)
+                        : undefined,
                     tooltip: p.tooltip ?? "",
                     onClickItem: firstItem
                 };
@@ -132,6 +139,7 @@ export function EChartsPieChart(props: EChartsPieChartContainerProps): ReactElem
         heightUnit,
         height,
         themeName,
+        darkMode,
         customLayout,
         customConfigurations,
         class: className,
@@ -178,6 +186,7 @@ export function EChartsPieChart(props: EChartsPieChartContainerProps): ReactElem
                 showToolbox={showToolbox}
                 backgroundColor={backgroundColor || undefined}
                 themeName={themeName || undefined}
+                darkMode={darkMode?.value ?? false}
                 customOption={customLayout || undefined}
                 customInitOptions={customConfigurations || undefined}
                 onDataPointClick={onDataPointClick}

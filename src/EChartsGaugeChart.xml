@@ -176,6 +176,11 @@
                     <caption>Background color</caption>
                     <description>CSS color for the chart background. Leave empty for transparent.</description>
                 </property>
+                <property key="darkMode" type="expression" required="false">
+                    <caption>Dark mode</caption>
+                    <description>Boolean expression. When true, the ECharts built-in dark theme is used. Bind to a boolean attribute or variable to switch at runtime.</description>
+                    <returnType type="Boolean" />
+                </property>
             </propertyGroup>
             <propertyGroup caption="Visibility">
                 <systemProperty key="Visibility" />

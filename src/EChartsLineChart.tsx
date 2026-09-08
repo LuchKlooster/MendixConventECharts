@@ -21,11 +21,15 @@ export function EChartsLineChart(props: EChartsLineChartContainerProps): ReactEl
         timelineLoop,
         timelinePlayInterval,
         timelineRewind,
+        enableRaceAnimation,
+        racePlayInterval,
+        raceLoop,
         widthUnit,
         width,
         heightUnit,
         height,
         themeName,
+        darkMode,
         customLayout,
         customConfigurations,
         class: className,
@@ -69,14 +73,18 @@ export function EChartsLineChart(props: EChartsLineChartContainerProps): ReactEl
                 gridLines={gridLines}
                 xAxisDateFormat={xAxisDateFormat || undefined}
                 backgroundColor={backgroundColor || undefined}
-                timelineConfig={enableTimeline ? {
+                timelineConfig={enableTimeline && !enableRaceAnimation ? {
                     autoPlay: timelineAutoPlay,
                     loop: timelineLoop,
                     playInterval: timelinePlayInterval,
                     rewind: timelineRewind,
                     dateFormat: timelineDateFormat || undefined
                 } : undefined}
+                racePlayInterval={enableRaceAnimation ? racePlayInterval : undefined}
+                raceLoop={raceLoop}
+                raceLabelFormat={timelineDateFormat || undefined}
                 themeName={themeName || undefined}
+                darkMode={darkMode?.value ?? false}
                 customOption={customLayout || undefined}
                 customInitOptions={customConfigurations || undefined}
                 onDataPointClick={onDataPointClick}

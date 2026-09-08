@@ -13,6 +13,8 @@ export type AggregationTypeEnum = "none" | "count" | "sum" | "avg" | "min" | "ma
 
 export type InterpolationEnum = "linear" | "spline";
 
+export type SeriesTypeEnum = "line" | "bar";
+
 export type LineStyleEnum = "line" | "lineWithMarkers" | "custom";
 
 export interface LinesType {
@@ -30,6 +32,7 @@ export interface LinesType {
     staticTooltipHoverText?: ListExpressionValue<string>;
     dynamicTooltipHoverText?: ListExpressionValue<string>;
     interpolation: InterpolationEnum;
+    seriesType: SeriesTypeEnum;
     lineStyle: LineStyleEnum;
     staticLineColor?: ListExpressionValue<string>;
     dynamicLineColor?: ListExpressionValue<string>;
@@ -40,6 +43,8 @@ export interface LinesType {
     dynamicOnClickAction?: ListActionValue;
     staticTimelineAttribute?: ListAttributeValue<string | boolean | Date | Big>;
     dynamicTimelineAttribute?: ListAttributeValue<string | boolean | Date | Big>;
+    yAxisIndex: number;
+    unit: string;
     customSeriesOptions: string;
 }
 
@@ -66,6 +71,7 @@ export interface LinesPreviewType {
     staticTooltipHoverText: string;
     dynamicTooltipHoverText: string;
     interpolation: InterpolationEnum;
+    seriesType: SeriesTypeEnum;
     lineStyle: LineStyleEnum;
     staticLineColor: string;
     dynamicLineColor: string;
@@ -76,6 +82,8 @@ export interface LinesPreviewType {
     dynamicOnClickAction: {} | null;
     staticTimelineAttribute: string;
     dynamicTimelineAttribute: string;
+    yAxisIndex: number | null;
+    unit: string;
     customSeriesOptions: string;
 }
 
@@ -94,12 +102,16 @@ export interface EChartsLineChartContainerProps {
     showToolbox: boolean;
     gridLines: GridLinesEnum;
     backgroundColor: string;
+    darkMode?: DynamicValue<boolean>;
     enableTimeline: boolean;
     timelineDateFormat: string;
     timelineAutoPlay: boolean;
     timelineLoop: boolean;
     timelinePlayInterval: number;
     timelineRewind: boolean;
+    enableRaceAnimation: boolean;
+    racePlayInterval: number;
+    raceLoop: boolean;
     widthUnit: WidthUnitEnum;
     width: number;
     heightUnit: HeightUnitEnum;
@@ -130,12 +142,16 @@ export interface EChartsLineChartPreviewProps {
     showToolbox: boolean;
     gridLines: GridLinesEnum;
     backgroundColor: string;
+    darkMode: string;
     enableTimeline: boolean;
     timelineDateFormat: string;
     timelineAutoPlay: boolean;
     timelineLoop: boolean;
     timelinePlayInterval: number | null;
     timelineRewind: boolean;
+    enableRaceAnimation: boolean;
+    racePlayInterval: number | null;
+    raceLoop: boolean;
     widthUnit: WidthUnitEnum;
     width: number | null;
     heightUnit: HeightUnitEnum;

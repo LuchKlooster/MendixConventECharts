@@ -26,6 +26,8 @@ export interface SeriesType {
     dynamicTooltipHoverText?: ListExpressionValue<string>;
     staticSliceColor?: ListExpressionValue<string>;
     dynamicSliceColor?: ListExpressionValue<string>;
+    staticSelected?: ListExpressionValue<boolean>;
+    dynamicSelected?: ListExpressionValue<boolean>;
     staticOnClickAction?: ListActionValue;
     dynamicOnClickAction?: ListActionValue;
     customSeriesOptions: string;
@@ -52,6 +54,8 @@ export interface SeriesPreviewType {
     dynamicTooltipHoverText: string;
     staticSliceColor: string;
     dynamicSliceColor: string;
+    staticSelected: string;
+    dynamicSelected: string;
     staticOnClickAction: {} | null;
     dynamicOnClickAction: {} | null;
     customSeriesOptions: string;
@@ -72,6 +76,7 @@ export interface EChartsPieChartContainerProps {
     legendPosition: LegendPositionEnum;
     showToolbox: boolean;
     backgroundColor: string;
+    darkMode?: DynamicValue<boolean>;
     widthUnit: WidthUnitEnum;
     width: number;
     heightUnit: HeightUnitEnum;
@@ -102,6 +107,7 @@ export interface EChartsPieChartPreviewProps {
     legendPosition: LegendPositionEnum;
     showToolbox: boolean;
     backgroundColor: string;
+    darkMode: string;
     widthUnit: WidthUnitEnum;
     width: number | null;
     heightUnit: HeightUnitEnum;

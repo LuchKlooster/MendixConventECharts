@@ -138,6 +138,14 @@
                                     <enumerationValue key="spline">Curved</enumerationValue>
                                 </enumerationValues>
                             </property>
+                            <property key="seriesType" type="enumeration" defaultValue="line">
+                                <caption>Series type</caption>
+                                <description>Choose line or bar for this series.</description>
+                                <enumerationValues>
+                                    <enumerationValue key="line">Line</enumerationValue>
+                                    <enumerationValue key="bar">Bar</enumerationValue>
+                                </enumerationValues>
+                            </property>
                             <property key="lineStyle" type="enumeration" defaultValue="line">
                                 <caption>Line style</caption>
                                 <description />
@@ -213,9 +221,17 @@
                             </property>
                         </propertyGroup>
                         <propertyGroup caption="Advanced">
+                            <property key="yAxisIndex" type="integer" defaultValue="0">
+                                <caption>Y axis index</caption>
+                                <description>0 = left Y axis, 1 = right Y axis (requires two Y axes configured via Custom chart option).</description>
+                            </property>
+                            <property key="unit" type="string" required="false">
+                                <caption>Unit</caption>
+                                <description>Unit suffix shown in the tooltip after the value, e.g. mm or %</description>
+                            </property>
                             <property key="customSeriesOptions" type="string" required="false" multiline="true">
                                 <caption>Custom series options</caption>
-                                <description>JSON object merged into this series' ECharts series config. Only applied when Line style is set to Custom.</description>
+                                <description>JSON object merged into this series' ECharts series config.</description>
                             </property>
                         </propertyGroup>
                     </properties>
@@ -232,7 +248,7 @@
                 </property>
                 <property key="xAxisDateFormat" type="string" required="false">
                     <caption>X axis date format</caption>
-                    <description>Format for DateTime X axis values. Tokens: yyyy yy MM dd HH mm ss. Example: dd-MM-yyyy or MM/dd/yyyy or dd-MM HH:mm</description>
+                    <description>Format for DateTime X axis values. Tokens: yyyy yy MM MMM MMMM dd d HH H mm ss EEEE EEE E ww Q. Example: E dd-MM-yyyy or dd-MM HH:mm</description>
                 </property>
                 <property key="yAxisLabel" type="textTemplate" required="false" multiline="false">
                     <caption>Y axis label</caption>
@@ -270,6 +286,11 @@
                     <caption>Background color</caption>
                     <description>CSS color for the chart background, e.g. #ffffff or rgba(255,255,255,0.5). Leave empty for transparent.</description>
                 </property>
+                <property key="darkMode" type="expression" required="false">
+                    <caption>Dark mode</caption>
+                    <description>Boolean expression. When true, the ECharts built-in dark theme is used. Bind to a boolean attribute or variable to switch at runtime.</description>
+                    <returnType type="Boolean" />
+                </property>
             </propertyGroup>
             <propertyGroup caption="Timeline">
                 <property key="enableTimeline" type="boolean" defaultValue="false">
@@ -278,7 +299,7 @@
                 </property>
                 <property key="timelineDateFormat" type="string" required="false">
                     <caption>Timeline date format</caption>
-                    <description>Format for DateTime timeline step labels. Tokens: yyyy yy MM dd HH mm ss. Example: dd-MM-yyyy</description>
+                    <description>Format for DateTime timeline step labels. Tokens: yyyy yy MM MMM MMMM dd d HH H mm ss EEEE EEE E ww Q. Example: E dd-MM-yyyy</description>
                 </property>
                 <property key="timelineAutoPlay" type="boolean" defaultValue="false">
                     <caption>Auto play</caption>
@@ -295,6 +316,18 @@
                 <property key="timelineRewind" type="boolean" defaultValue="false">
                     <caption>Show rewind button</caption>
                     <description />
+                </property>
+                <property key="enableRaceAnimation" type="boolean" defaultValue="false">
+                    <caption>Enable race animation</caption>
+                    <description>Animate through timeline steps cumulatively (line-race style). Requires a Timeline attribute on each series. Replaces the timeline slider with an auto-playing animation.</description>
+                </property>
+                <property key="racePlayInterval" type="integer" defaultValue="2000">
+                    <caption>Race play interval (ms)</caption>
+                    <description>Duration between animation steps in milliseconds.</description>
+                </property>
+                <property key="raceLoop" type="boolean" defaultValue="true">
+                    <caption>Loop animation</caption>
+                    <description>Restart the animation after the last step.</description>
                 </property>
             </propertyGroup>
             <propertyGroup caption="Visibility">

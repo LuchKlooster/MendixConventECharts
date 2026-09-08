@@ -144,6 +144,14 @@
                                     <attributeType name="AutoNumber" />
                                 </attributeTypes>
                             </property>
+                            <property key="seriesType" type="enumeration" defaultValue="bar">
+                                <caption>Series type</caption>
+                                <description>Choose bar or line for this series.</description>
+                                <enumerationValues>
+                                    <enumerationValue key="bar">Bar</enumerationValue>
+                                    <enumerationValue key="line">Line</enumerationValue>
+                                </enumerationValues>
+                            </property>
                             <property key="staticBarColor" type="expression" required="false" dataSource="staticDataSource">
                                 <caption>Bar color</caption>
                                 <description>CSS color value, e.g. #FF0000 or red</description>
@@ -196,6 +204,14 @@
                             </property>
                         </propertyGroup>
                         <propertyGroup caption="Advanced">
+                            <property key="yAxisIndex" type="integer" defaultValue="0">
+                                <caption>Y axis index</caption>
+                                <description>0 = left Y axis, 1 = right Y axis (requires two Y axes configured via Custom chart option).</description>
+                            </property>
+                            <property key="unit" type="string" required="false">
+                                <caption>Unit</caption>
+                                <description>Unit suffix shown in the tooltip after the value, e.g. mm or %</description>
+                            </property>
                             <property key="customSeriesOptions" type="string" required="false" multiline="true">
                                 <caption>Custom series options</caption>
                                 <description>JSON object merged into this series' ECharts series config.</description>
@@ -213,6 +229,10 @@
                     <caption>Horizontal bars</caption>
                     <description>Rotate chart so bars grow left-to-right instead of bottom-to-top.</description>
                 </property>
+                <property key="rangeChart" type="boolean" defaultValue="false">
+                    <caption>Range chart</caption>
+                    <description>Render as a bar range chart. Series 1 provides the maximum value, Series 2 provides the minimum value. Both series must share the same category attribute.</description>
+                </property>
                 <property key="stack" type="boolean" defaultValue="false">
                     <caption>Stack series</caption>
                     <description>Stack all series on top of each other.</description>
@@ -227,7 +247,7 @@
                 </property>
                 <property key="categoryDateFormat" type="string" required="false">
                     <caption>Category date format</caption>
-                    <description>Format for DateTime category labels. Tokens: yyyy yy MM dd HH mm ss. Example: dd-MM-yyyy</description>
+                    <description>Format for DateTime category labels. Tokens: yyyy yy MM MMM MMMM dd d HH H mm ss EEEE EEE E ww Q. Example: E dd-MM-yyyy</description>
                 </property>
                 <property key="valueAxisLabel" type="textTemplate" required="false" multiline="false">
                     <caption>Value axis label</caption>
@@ -265,6 +285,11 @@
                     <caption>Background color</caption>
                     <description>CSS color for the chart background, e.g. #ffffff or rgba(255,255,255,0.5). Leave empty for transparent.</description>
                 </property>
+                <property key="darkMode" type="expression" required="false">
+                    <caption>Dark mode</caption>
+                    <description>Boolean expression. When true, the ECharts built-in dark theme is used. Bind to a boolean attribute or variable to switch at runtime.</description>
+                    <returnType type="Boolean" />
+                </property>
             </propertyGroup>
             <propertyGroup caption="Timeline">
                 <property key="enableTimeline" type="boolean" defaultValue="false">
@@ -273,7 +298,7 @@
                 </property>
                 <property key="timelineDateFormat" type="string" required="false">
                     <caption>Timeline date format</caption>
-                    <description>Format for DateTime timeline step labels. Tokens: yyyy yy MM dd HH mm ss. Example: dd-MM-yyyy</description>
+                    <description>Format for DateTime timeline step labels. Tokens: yyyy yy MM MMM MMMM dd d HH H mm ss EEEE EEE E ww Q. Example: E dd-MM-yyyy</description>
                 </property>
                 <property key="timelineAutoPlay" type="boolean" defaultValue="false">
                     <caption>Auto play</caption>

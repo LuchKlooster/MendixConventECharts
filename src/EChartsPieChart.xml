@@ -130,6 +130,16 @@
                                 <description>CSS color value, e.g. #FF0000 or red</description>
                                 <returnType type="String" />
                             </property>
+                            <property key="staticSelected" type="expression" required="false" dataSource="staticDataSource">
+                                <caption>Pre-selected</caption>
+                                <description>When true, this slice is exploded/selected by default.</description>
+                                <returnType type="Boolean" />
+                            </property>
+                            <property key="dynamicSelected" type="expression" required="false" dataSource="dynamicDataSource">
+                                <caption>Pre-selected</caption>
+                                <description>When true, this slice is exploded/selected by default.</description>
+                                <returnType type="Boolean" />
+                            </property>
                         </propertyGroup>
                         <propertyGroup caption="Events">
                             <property key="staticOnClickAction" type="action" required="false" dataSource="staticDataSource">
@@ -192,6 +202,11 @@
                 <property key="backgroundColor" type="string" required="false">
                     <caption>Background color</caption>
                     <description>CSS color for the chart background. Leave empty for transparent.</description>
+                </property>
+                <property key="darkMode" type="expression" required="false">
+                    <caption>Dark mode</caption>
+                    <description>Boolean expression. When true, the ECharts built-in dark theme is used. Bind to a boolean attribute or variable to switch at runtime.</description>
+                    <returnType type="Boolean" />
                 </property>
             </propertyGroup>
             <propertyGroup caption="Visibility">

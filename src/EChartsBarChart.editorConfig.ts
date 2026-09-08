@@ -48,6 +48,9 @@ export function getProperties(values: any, defaultProperties: Properties): Prope
 
     if (!values.enableAdvancedOptions) {
         hideProperties(defaultProperties, ["customLayout", "customConfigurations"]);
+        values.series?.forEach((_s: any, i: number) => {
+            hideInObject(defaultProperties, "series", i, ["customSeriesOptions"]);
+        });
     }
     if (!values.enableTimeline) {
         hideProperties(defaultProperties, [

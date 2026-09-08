@@ -1,11 +1,15 @@
 import { ReactElement, useEffect, useRef, useState } from "react";
 import * as echarts from "echarts/core";
-import { GaugeChart as EChartsGaugeChart } from "echarts/charts";
+import { barRangeInstaller } from "../utils/barRange";
+import { GaugeChart as EChartsGaugeChart, CustomChart } from "echarts/charts";
 import { TooltipComponent, LegendComponent, TitleComponent, ToolboxComponent } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import type { EChartsOption, GaugeSeriesOption } from "echarts";
+import { registerEnhancedDarkTheme } from "../utils/darkTheme";
 
-echarts.use([EChartsGaugeChart, TooltipComponent, LegendComponent, TitleComponent, ToolboxComponent, CanvasRenderer]);
+echarts.use([EChartsGaugeChart, CustomChart, TooltipComponent, LegendComponent, TitleComponent, ToolboxComponent, CanvasRenderer]);
+echarts.use(barRangeInstaller);
+registerEnhancedDarkTheme(echarts);
 
 const REGISTRY_KEY = "__echartsThemeRegistry";
 const EVENT_NAME = "echarts-theme-registered";
@@ -49,6 +53,7 @@ export interface GaugeChartProps {
     showToolbox: boolean;
     backgroundColor?: string;
     themeName?: string;
+    darkMode?: boolean;
     customOption?: string;
     customInitOptions?: string;
     onDataPointClick?: (dataIndex: number) => void;
@@ -203,7 +208,7 @@ function buildEChartsOption(props: GaugeChartProps): EChartsOption {
     }
 
     const option: EChartsOption = {
-        ...(backgroundColor ? { backgroundColor } : {}),
+        ...(!props.darkMode && backgroundColor ? { backgroundColor } : {}),
         legend: buildLegend(showLegend, legendPosition),
         toolbox: showToolbox ? { feature: { dataView: { show: true, readOnly: false }, restore: { show: true }, saveAsImage: { show: true } } } : undefined,
         tooltip: { trigger: "item" },
@@ -238,7 +243,8 @@ export function GaugeChart(props: GaugeChartProps): ReactElement {
         if (propsRef.current.customInitOptions) {
             try { initOpts = JSON.parse(propsRef.current.customInitOptions); } catch { /* ignore */ }
         }
-        chartRef.current = echarts.init(containerRef.current, propsRef.current.themeName || undefined, { renderer: "canvas", ...initOpts });
+        const theme = propsRef.current.darkMode ? "dark" : (propsRef.current.themeName || undefined);
+        chartRef.current = echarts.init(containerRef.current, theme, { renderer: "canvas", ...initOpts });
         chartRef.current.resize();
         // Apply current option immediately so the chart is not blank after reinit
         chartRef.current.setOption(buildEChartsOption(propsRef.current) as EChartsOption, { notMerge: true });
@@ -246,7 +252,7 @@ export function GaugeChart(props: GaugeChartProps): ReactElement {
             chartRef.current?.dispose();
             chartRef.current = null;
         };
-    }, [reInitKey]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [reInitKey, props.darkMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Reinitialize when the Theme Loader registers a matching theme at runtime
     useEffect(() => {

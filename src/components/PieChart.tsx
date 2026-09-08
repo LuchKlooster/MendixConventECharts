@@ -1,12 +1,16 @@
 import { ReactElement, useEffect, useRef, useState } from "react";
 import * as echarts from "echarts/core";
-import { PieChart as EChartsPieChart } from "echarts/charts";
+import { barRangeInstaller } from "../utils/barRange";
+import { PieChart as EChartsPieChart, CustomChart } from "echarts/charts";
 import { TooltipComponent, LegendComponent, TitleComponent, ToolboxComponent } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import type { EChartsOption, PieSeriesOption } from "echarts";
 import { ObjectItem } from "mendix";
+import { registerEnhancedDarkTheme } from "../utils/darkTheme";
 
-echarts.use([EChartsPieChart, TooltipComponent, LegendComponent, TitleComponent, ToolboxComponent, CanvasRenderer]);
+echarts.use([EChartsPieChart, CustomChart, TooltipComponent, LegendComponent, TitleComponent, ToolboxComponent, CanvasRenderer]);
+echarts.use(barRangeInstaller);
+registerEnhancedDarkTheme(echarts);
 
 const REGISTRY_KEY = "__echartsThemeRegistry";
 const EVENT_NAME = "echarts-theme-registered";
@@ -23,6 +27,7 @@ export interface PieSlice {
     name: string;
     value: number;
     color?: string;
+    selected?: boolean;
     tooltip: string;
     onClickItem?: ObjectItem;
 }
@@ -44,6 +49,7 @@ export interface PieChartProps {
     showToolbox: boolean;
     backgroundColor?: string;
     themeName?: string;
+    darkMode?: boolean;
     customOption?: string;
     customInitOptions?: string;
     onDataPointClick?: (seriesIndex: number, sliceIndex: number) => void;
@@ -107,8 +113,6 @@ function buildEChartsOption(props: PieChartProps): EChartsOption {
     const { series, donut, innerRadius, outerRadius, roseType, showLegend, legendPosition, showToolbox, backgroundColor } = props;
 
     const eChartsSeries: PieSeriesOption[] = series.map((s, i) => {
-        const hasCustomTooltips = s.slices.some(sl => sl.tooltip);
-
         const baseSeries: PieSeriesOption = {
             type: "pie",
             name: s.name || undefined,
@@ -117,16 +121,15 @@ function buildEChartsOption(props: PieChartProps): EChartsOption {
             data: s.slices.map(sl => ({
                 name: sl.name,
                 value: sl.value,
+                selected: sl.selected || undefined,
                 itemStyle: sl.color ? { color: sl.color } : undefined
             })),
             tooltip: {
-                formatter: hasCustomTooltips
-                    ? (params: unknown) => {
-                          const p = params as { dataIndex: number; name: string; value: unknown; percent: number; marker: string };
-                          const customText = s.slices[p.dataIndex]?.tooltip;
-                          return customText || `${p.marker}${p.name}: ${p.value}`;
-                      }
-                    : undefined
+                formatter: (params: unknown) => {
+                    const p = params as { dataIndex: number; name: string; value: unknown; percent: number; marker: string };
+                    const customText = s.slices[p.dataIndex]?.tooltip;
+                    return customText || `${p.marker}${p.name}: <b>${p.value}</b>`;
+                }
             }
         };
 
@@ -142,7 +145,7 @@ function buildEChartsOption(props: PieChartProps): EChartsOption {
     });
 
     const option: EChartsOption = {
-        ...(backgroundColor ? { backgroundColor } : {}),
+        ...(!props.darkMode && backgroundColor ? { backgroundColor } : {}),
         tooltip: { trigger: "item" },
         legend: buildLegend(showLegend, legendPosition),
         toolbox: showToolbox ? { feature: { dataView: { show: true, readOnly: false }, restore: { show: true }, saveAsImage: { show: true } } } : undefined,
@@ -173,13 +176,14 @@ export function PieChart(props: PieChartProps): ReactElement {
         if (props.customInitOptions) {
             try { initOpts = JSON.parse(props.customInitOptions); } catch { /* ignore */ }
         }
-        chartRef.current = echarts.init(containerRef.current, props.themeName || undefined, { renderer: "canvas", ...initOpts });
+        const theme = props.darkMode ? "dark" : (props.themeName || undefined);
+        chartRef.current = echarts.init(containerRef.current, theme, { renderer: "canvas", ...initOpts });
         chartRef.current.resize();
         return () => {
             chartRef.current?.dispose();
             chartRef.current = null;
         };
-    }, [reInitKey]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [reInitKey, props.darkMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Reinitialize when the Theme Loader registers a matching theme at runtime
     useEffect(() => {

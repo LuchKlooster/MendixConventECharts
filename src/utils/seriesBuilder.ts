@@ -12,6 +12,7 @@ export interface TimelineStep {
 
 export interface BuiltSeries {
     name: string;
+    seriesType: "line" | "bar";
     smooth: boolean;
     showSymbol: boolean;
     lineStyle: LineStyleEnum;
@@ -21,6 +22,8 @@ export interface BuiltSeries {
     xIsDateTime: boolean;
     data: Array<[string | number, number] | [string | number, number, number]>;
     tooltips: string[];
+    yAxisIndex: number;
+    unit: string;
     customSeriesOptions: string;
     onClickItems: ObjectItem[];
     // When a timeline attribute is set, data is split per step
@@ -105,6 +108,7 @@ function buildStaticSeries(line: LinesType): BuiltSeries[] {
     return [
         {
             name: line.staticName?.value ?? "Series",
+            seriesType: (line.seriesType ?? "line") as "line" | "bar",
             smooth: line.interpolation === "spline",
             showSymbol: line.lineStyle !== "line",
             lineStyle: line.lineStyle,
@@ -114,6 +118,8 @@ function buildStaticSeries(line: LinesType): BuiltSeries[] {
             markerColor,
             data: points.map(p => p.colorDim !== undefined ? [p.x, p.y, p.colorDim] : [p.x, p.y]),
             tooltips: points.map(p => p.tooltip ?? ""),
+            yAxisIndex: line.yAxisIndex ?? 0,
+            unit: line.unit ?? "",
             customSeriesOptions: line.customSeriesOptions,
             onClickItems: items,
             timelineSteps
@@ -181,6 +187,7 @@ function buildDynamicSeries(line: LinesType): BuiltSeries[] {
 
         result.push({
             name,
+            seriesType: (line.seriesType ?? "line") as "line" | "bar",
             smooth: line.interpolation === "spline",
             showSymbol: line.lineStyle !== "line",
             lineStyle: line.lineStyle,
@@ -190,6 +197,8 @@ function buildDynamicSeries(line: LinesType): BuiltSeries[] {
             markerColor,
             data: points.map(p => p.colorDim !== undefined ? [p.x, p.y, p.colorDim] : [p.x, p.y]),
             tooltips: points.map(p => p.tooltip ?? ""),
+            yAxisIndex: line.yAxisIndex ?? 0,
+            unit: line.unit ?? "",
             customSeriesOptions: line.customSeriesOptions,
             onClickItems: groupItems,
             timelineSteps

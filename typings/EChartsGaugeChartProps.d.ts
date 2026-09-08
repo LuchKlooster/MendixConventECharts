@@ -49,6 +49,7 @@ export interface EChartsGaugeChartContainerProps {
     legendPosition: LegendPositionEnum;
     showToolbox: boolean;
     backgroundColor: string;
+    darkMode?: DynamicValue<boolean>;
     widthUnit: WidthUnitEnum;
     width: number;
     heightUnit: HeightUnitEnum;
@@ -100,6 +101,7 @@ export interface EChartsGaugeChartPreviewProps {
     legendPosition: LegendPositionEnum;
     showToolbox: boolean;
     backgroundColor: string;
+    darkMode: string;
     widthUnit: WidthUnitEnum;
     width: number | null;
     heightUnit: HeightUnitEnum;

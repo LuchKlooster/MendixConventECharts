@@ -11,6 +11,8 @@ export type DataSetEnum = "static" | "dynamic";
 
 export type AggregationTypeEnum = "none" | "count" | "sum" | "avg" | "min" | "max" | "median" | "mode" | "first" | "last";
 
+export type SeriesTypeEnum = "bar" | "line";
+
 export interface SeriesType {
     dataSet: DataSetEnum;
     staticDataSource?: ListValue;
@@ -27,12 +29,15 @@ export interface SeriesType {
     dynamicTooltipHoverText?: ListExpressionValue<string>;
     staticColorDimAttribute?: ListAttributeValue<Big>;
     dynamicColorDimAttribute?: ListAttributeValue<Big>;
+    seriesType: SeriesTypeEnum;
     staticBarColor?: ListExpressionValue<string>;
     dynamicBarColor?: ListExpressionValue<string>;
     staticOnClickAction?: ListActionValue;
     dynamicOnClickAction?: ListActionValue;
     staticTimelineAttribute?: ListAttributeValue<string | boolean | Date | Big>;
     dynamicTimelineAttribute?: ListAttributeValue<string | boolean | Date | Big>;
+    yAxisIndex: number;
+    unit: string;
     customSeriesOptions: string;
 }
 
@@ -60,12 +65,15 @@ export interface SeriesPreviewType {
     dynamicTooltipHoverText: string;
     staticColorDimAttribute: string;
     dynamicColorDimAttribute: string;
+    seriesType: SeriesTypeEnum;
     staticBarColor: string;
     dynamicBarColor: string;
     staticOnClickAction: {} | null;
     dynamicOnClickAction: {} | null;
     staticTimelineAttribute: string;
     dynamicTimelineAttribute: string;
+    yAxisIndex: number | null;
+    unit: string;
     customSeriesOptions: string;
 }
 
@@ -77,6 +85,7 @@ export interface EChartsBarChartContainerProps {
     series: SeriesType[];
     enableAdvancedOptions: boolean;
     horizontal: boolean;
+    rangeChart: boolean;
     stack: boolean;
     barWidth: string;
     categoryAxisLabel?: DynamicValue<string>;
@@ -87,6 +96,7 @@ export interface EChartsBarChartContainerProps {
     showToolbox: boolean;
     gridLines: GridLinesEnum;
     backgroundColor: string;
+    darkMode?: DynamicValue<boolean>;
     enableTimeline: boolean;
     timelineDateFormat: string;
     timelineAutoPlay: boolean;
@@ -116,6 +126,7 @@ export interface EChartsBarChartPreviewProps {
     series: SeriesPreviewType[];
     enableAdvancedOptions: boolean;
     horizontal: boolean;
+    rangeChart: boolean;
     stack: boolean;
     barWidth: string;
     categoryAxisLabel: string;
@@ -126,6 +137,7 @@ export interface EChartsBarChartPreviewProps {
     showToolbox: boolean;
     gridLines: GridLinesEnum;
     backgroundColor: string;
+    darkMode: string;
     enableTimeline: boolean;
     timelineDateFormat: string;
     timelineAutoPlay: boolean;

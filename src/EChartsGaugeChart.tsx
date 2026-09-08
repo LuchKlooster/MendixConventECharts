@@ -1,4 +1,5 @@
 import { ReactElement, CSSProperties, useRef } from "react";
+import { DynamicValue } from "mendix";
 import { GaugeChart, GaugePointer, GaugeSeries } from "./components/GaugeChart";
 import "./ui/EChartsLineChart.css"; // shared stylesheet
 
@@ -57,6 +58,7 @@ interface EChartsGaugeChartContainerProps {
     heightUnit: "percentageOfWidth" | "pixels" | "percentageOfParent";
     height: number;
     themeName: string;
+    darkMode?: DynamicValue<boolean>;
     customLayout: string;
     customConfigurations: string;
 }
@@ -83,7 +85,7 @@ export function EChartsGaugeChart(props: EChartsGaugeChartContainerProps): React
         min, max, units, startAngle, endAngle, splitNumber,
         showProgress, colorRanges, showLegend, legendPosition, showToolbox, backgroundColor,
         widthUnit, width, heightUnit, height,
-        themeName, customLayout, customConfigurations,
+        themeName, darkMode, customLayout, customConfigurations,
         class: className, style
     } = props;
 
@@ -147,6 +149,7 @@ export function EChartsGaugeChart(props: EChartsGaugeChartContainerProps): React
                 showToolbox={showToolbox}
                 backgroundColor={backgroundColor || undefined}
                 themeName={themeName || undefined}
+                darkMode={darkMode?.value ?? false}
                 customOption={customLayout || undefined}
                 customInitOptions={customConfigurations || undefined}
             />
